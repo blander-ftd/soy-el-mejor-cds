@@ -28,8 +28,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-muted/40">
-      <aside className="fixed inset-y-0 left-0 z-10 hidden w-64 flex-col border-r bg-card sm:flex">
-        <div className="flex h-16 items-center border-b px-6">
+      <aside className="fixed inset-y-0 left-0 z-10 hidden w-64 flex-col border-r border-primary bg-card sm:flex">
+        <div className="flex h-16 items-center border-b border-primary px-6">
           <div className="flex items-center gap-2 font-semibold">
             <AppLogo className="size-8" />
             <span>Soy El Mejor</span>
@@ -41,7 +41,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </aside>
 
       <div className="flex flex-col sm:pl-64">
-        <header className="sticky top-0 z-10 flex h-16 items-center justify-end gap-4 border-b bg-card px-6">
+        <header className="sticky top-0 z-10 flex h-16 items-center justify-end gap-4 border-b border-primary bg-card px-6">
           <ThemeToggle />
           <UserNav user={currentUser} />
         </header>
