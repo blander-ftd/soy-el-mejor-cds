@@ -11,7 +11,22 @@ export default function Home() {
   useEffect(() => {
     if (!loading) {
       if (currentUser) {
-        router.replace("/app");
+        switch (currentUser.role) {
+            case 'Admin':
+              router.replace('/admin');
+              break;
+            case 'Supervisor':
+              router.replace('/supervisor');
+              break;
+            case 'Coordinator':
+              router.replace('/coordinator');
+              break;
+            case 'Collaborator':
+              router.replace('/collaborator');
+              break;
+            default:
+              router.replace('/login');
+          }
       } else {
         router.replace("/login");
       }
