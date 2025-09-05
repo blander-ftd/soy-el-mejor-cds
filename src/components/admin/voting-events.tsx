@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { votingEvents } from "@/lib/data";
+import { useState, useEffect } from "react";
+import { votingEvents as initialVotingEvents, departments } from "@/lib/data";
+import type { VotingEvent } from "@/lib/types";
 import {
   Table,
   TableBody,
@@ -12,7 +13,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Pencil, Play, StopCircle, PlusCircle, Calendar as CalendarIcon } from "lucide-react";
+import { MoreHorizontal, Pencil, PlusCircle, Calendar as CalendarIcon } from "lucide-react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -27,8 +28,6 @@ import {
     DialogHeader,
     DialogTitle,
     DialogTrigger,
-    DialogFooter,
-    DialogClose
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -41,12 +40,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { cn } from "@/lib/utils";
 import { format, addDays } from "date-fns";
-import type { DateRange } from "react-day-picker";
 import { useToast } from "@/hooks/use-toast";
-import { departments } from "@/lib/data";
 import { Textarea } from "@/components/ui/textarea";
 
 const eventFormSchema = z.object({
+    id: z.string().optional(),
     month: z.string().min(1, "Event name is required."),
     department: z.string().min(1, "Department is required."),
     dateRange: z.object({
@@ -78,31 +76,82 @@ const eventFormSchema = z.object({
 
 type EventFormValues = z.infer<typeof eventFormSchema>;
 
+const defaultFormValues = {
+    month: "",
+    department: "",
+    dateRange: {
+        from: new Date(),
+        to: addDays(new Date(), 20),
+    },
+    nominationEndDate: addDays(new Date(), 7),
+    votingEndDate: addDays(new Date(), 14),
+    evaluationEndDate: addDays(new Date(), 20),
+}
+
 
 export function VotingEvents() {
     const [open, setOpen] = useState(false);
+    const [editingEvent, setEditingEvent] = useState<VotingEvent | null>(null);
+    const [votingEvents, setVotingEvents] = useState(initialVotingEvents);
     const { toast } = useToast();
 
     const form = useForm<EventFormValues>({
         resolver: zodResolver(eventFormSchema),
-        defaultValues: {
-            month: "",
-            department: "",
-            dateRange: {
-                from: new Date(),
-                to: addDays(new Date(), 20),
-            },
-        },
+        defaultValues: defaultFormValues,
     });
+    
+    useEffect(() => {
+        if (open && editingEvent) {
+            const dateRange = {
+                from: editingEvent.startDate || new Date(),
+                to: editingEvent.endDate || addDays(new Date(), 20),
+            };
+            form.reset({
+                ...editingEvent,
+                dateRange,
+                nominationEndDate: addDays(dateRange.from, 7),
+                votingEndDate: addDays(dateRange.from, 14),
+                evaluationEndDate: dateRange.to
+            });
+        } else if (!open) {
+            form.reset(defaultFormValues);
+            setEditingEvent(null);
+        }
+    }, [open, editingEvent, form]);
+
 
     function onSubmit(data: EventFormValues) {
-        console.log(data);
+        const isEditing = !!editingEvent;
+        const eventData = {
+            id: editingEvent?.id || `event-${Date.now()}`,
+            month: data.month,
+            department: data.department,
+            startDate: data.dateRange.from,
+            endDate: data.dateRange.to,
+            status: editingEvent?.status || "Pending",
+        };
+
+        setVotingEvents(prev => 
+            isEditing
+                ? prev.map(e => e.id === editingEvent.id ? { ...e, ...eventData } : e)
+                : [...prev, eventData]
+        );
+
         toast({
-            title: "Event Created!",
-            description: `The event "${data.month}" for ${data.department} has been scheduled.`,
+            title: isEditing ? "Event Updated!" : "Event Created!",
+            description: `The event "${data.month}" for ${data.department} has been ${isEditing ? 'updated' : 'scheduled'}.`,
         });
         setOpen(false);
-        form.reset();
+    }
+    
+    const handleEdit = (event: VotingEvent) => {
+        setEditingEvent(event);
+        setOpen(true);
+    };
+
+    const handleCreate = () => {
+        setEditingEvent(null);
+        setOpen(true);
     }
 
 
@@ -111,16 +160,16 @@ export function VotingEvents() {
         <div className="flex justify-end">
             <Dialog open={open} onOpenChange={setOpen}>
                 <DialogTrigger asChild>
-                    <Button>
+                    <Button onClick={handleCreate}>
                         <PlusCircle className="mr-2 h-4 w-4" />
                         Create Event
                     </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-2xl">
                     <DialogHeader>
-                        <DialogTitle>Create New Voting Event</DialogTitle>
+                        <DialogTitle>{editingEvent ? 'Edit' : 'Create New'} Voting Event</DialogTitle>
                         <DialogDescription>
-                            Define the parameters and timeline for the new voting event.
+                           {editingEvent ? 'Update the event details below.' : 'Define the parameters and timeline for the new voting event.'}
                         </DialogDescription>
                     </DialogHeader>
                     <Form {...form}>
@@ -145,7 +194,7 @@ export function VotingEvents() {
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>Department</FormLabel>
-                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <Select onValueChange={field.onChange} value={field.value}>
                                                 <FormControl>
                                                     <SelectTrigger>
                                                         <SelectValue placeholder="Select a department" />
@@ -178,7 +227,7 @@ export function VotingEvents() {
                                                     variant={"outline"}
                                                     className={cn(
                                                     "justify-start text-left font-normal",
-                                                    !field.value.from && "text-muted-foreground"
+                                                    !field.value?.from && "text-muted-foreground"
                                                     )}
                                                 >
                                                     <CalendarIcon className="mr-2 h-4 w-4" />
@@ -202,7 +251,7 @@ export function VotingEvents() {
                                                     initialFocus
                                                     mode="range"
                                                     defaultMonth={field.value?.from}
-                                                    selected={{from: field.value.from, to: field.value.to}}
+                                                    selected={field.value}
                                                     onSelect={field.onChange}
                                                     numberOfMonths={2}
                                                 />
@@ -321,10 +370,8 @@ export function VotingEvents() {
                                 />
                             </div>
                             <DialogFooter>
-                                <DialogClose asChild>
-                                    <Button type="button" variant="ghost">Cancel</Button>
-                                </DialogClose>
-                                <Button type="submit">Create Event</Button>
+                                <Button type="button" variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
+                                <Button type="submit">{editingEvent ? 'Save Changes' : 'Create Event'}</Button>
                             </DialogFooter>
                         </form>
                     </Form>
@@ -366,9 +413,7 @@ export function VotingEvents() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                    <DropdownMenuItem><Play className="mr-2 h-4 w-4"/>Start Event</DropdownMenuItem>
-                    <DropdownMenuItem><Pencil className="mr-2 h-4 w-4"/>Edit Event</DropdownMenuItem>
-                    <DropdownMenuItem><StopCircle className="mr-2 h-4 w-4"/>End Event</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => handleEdit(event)}><Pencil className="mr-2 h-4 w-4"/>Edit Event</DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
                 </TableCell>
@@ -384,3 +429,5 @@ export function VotingEvents() {
     </div>
   );
 }
+
+    
