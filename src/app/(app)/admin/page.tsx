@@ -20,11 +20,9 @@ export default function AdminPage() {
         </TabsList>
         <TabsContent value="events">
             <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                    <div className="space-y-1">
-                        <CardTitle>Manage Voting Events</CardTitle>
-                        <CardDescription>Start, edit, and end voting events.</CardDescription>
-                    </div>
+                <CardHeader>
+                    <CardTitle>Manage Voting Events</CardTitle>
+                    <CardDescription>Start, edit, and end voting events.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <VotingEvents />
@@ -35,7 +33,7 @@ export default function AdminPage() {
             <Card>
                 <CardHeader>
                     <CardTitle>Manage Users</CardTitle>
-                    <CardDescription>View and manage all user accounts in the system.</CardDescription>
+                    <CardDescription>View, add, and manage user accounts in the system.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <UserManagement />
