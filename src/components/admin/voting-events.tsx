@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Pencil, Play, StopCircle } from "lucide-react";
+import { MoreHorizontal, Pencil, Play, StopCircle, PlusCircle } from "lucide-react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -26,6 +26,12 @@ import { Label } from "@/components/ui/label";
 export function VotingEvents() {
   return (
     <div className="space-y-6">
+        <div className="flex justify-end">
+            <Button>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Create Event
+            </Button>
+        </div>
         <Table>
         <TableHeader>
             <TableRow>
@@ -41,7 +47,7 @@ export function VotingEvents() {
             {votingEvents.map((event) => (
             <TableRow key={event.id}>
                 <TableCell className="font-medium">{event.month}</TableCell>
-                <TableCell>{event.department}</TableCell>
+                <TableCell>{event.department ?? 'All Departments'}</TableCell>
                 <TableCell>
                 <Badge
                     className={cn({

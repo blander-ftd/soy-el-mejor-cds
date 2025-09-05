@@ -4,6 +4,8 @@ import { VotingEvents } from "@/components/admin/voting-events";
 import { AuditLog } from "@/components/admin/audit-log";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Users, Vote, Activity } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { PlusCircle } from "lucide-react";
 
 export default function AdminPage() {
   return (
@@ -18,9 +20,11 @@ export default function AdminPage() {
         </TabsList>
         <TabsContent value="events">
             <Card>
-                <CardHeader>
-                    <CardTitle>Manage Voting Events</CardTitle>
-                    <CardDescription>Start, edit, and end voting events for each department.</CardDescription>
+                <CardHeader className="flex flex-row items-center justify-between">
+                    <div className="space-y-1">
+                        <CardTitle>Manage Voting Events</CardTitle>
+                        <CardDescription>Start, edit, and end voting events.</CardDescription>
+                    </div>
                 </CardHeader>
                 <CardContent>
                     <VotingEvents />

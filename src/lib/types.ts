@@ -13,7 +13,7 @@ export interface User {
 
 export interface VotingEvent {
   id: string;
-  department: Department;
+  department?: Department | "All Departments";
   status: "Pending" | "Active" | "Closed";
   startDate?: Date;
   endDate?: Date;

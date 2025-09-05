@@ -16,7 +16,7 @@ export const users: User[] = [
 export const votingEvents: VotingEvent[] = [
     { id: 'event-1', department: 'Technology', status: 'Active', month: 'July 2024', startDate: new Date('2024-07-01'), endDate: new Date('2024-07-25') },
     { id: 'event-2', department: 'Marketing', status: 'Pending', month: 'July 2024' },
-    { id: 'event-3', department: 'Sales', status: 'Closed', month: 'June 2024', startDate: new Date('2024-06-01'), endDate: new Date('2024-06-25') },
+    { id: 'event-3', department: 'All Departments', status: 'Closed', month: 'June 2024', startDate: new Date('2024-06-01'), endDate: new Date('2024-06-25') },
     { id: 'event-4', department: 'Human Resources', status: 'Closed', month: 'June 2024', startDate: new Date('2024-06-01'), endDate: new Date('2024-06-25') },
 ];
 
