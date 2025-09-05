@@ -36,8 +36,8 @@ export default function SupervisorPage() {
     }
 
   return (
-    <div className="grid gap-6 md:grid-cols-2">
-      <div className="space-y-6">
+    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="space-y-6 lg:col-span-2">
         <h1 className="text-3xl font-bold tracking-tight">Nomination Center</h1>
         
         <Card>
@@ -79,7 +79,7 @@ export default function SupervisorPage() {
         </Card>
       </div>
       <div className="space-y-6">
-        <Card className="mt-16">
+        <Card className="md:mt-16">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2"><UserCheck /> Current Nominations</CardTitle>
                 <CardDescription>You have nominated the following collaborators for July 2024.</CardDescription>
