@@ -3,14 +3,14 @@ import type { User, Department, Role, VotingEvent, Nomination, Vote, AuditLog } 
 export const departments: Department[] = ["Technology", "Marketing", "Sales", "Human Resources"];
 
 export const users: User[] = [
-  { id: 'user-1', name: 'Admin User', email: 'admin@example.com', role: 'Admin', department: 'Technology', avatar: '/avatars/01.png' },
-  { id: 'user-2', name: 'Sofia Davis', email: 'supervisor.tech@example.com', role: 'Supervisor', department: 'Technology', avatar: '/avatars/02.png' },
-  { id: 'user-3', name: 'Alex Johnson', email: 'collaborator.tech@example.com', role: 'Collaborator', department: 'Technology', avatar: '/avatars/03.png' },
-  { id: 'user-4', name: 'Maria Garcia', email: 'coordinator.tech@example.com', role: 'Coordinator', department: 'Technology', avatar: '/avatars/04.png' },
-  { id: 'user-5', name: 'David Smith', email: 'supervisor.mktg@example.com', role: 'Supervisor', department: 'Marketing', avatar: '/avatars/05.png' },
-  { id: 'user-6', name: 'Emily White', email: 'collaborator.mktg@example.com', role: 'Collaborator', department: 'Marketing', avatar: '/avatars/01.png' },
-  { id: 'user-7', name: 'James Brown', email: 'collaborator.tech.2@example.com', role: 'Collaborator', department: 'Technology', avatar: '/avatars/02.png' },
-  { id: 'user-8', name: 'Linda Miller', email: 'collaborator.tech.3@example.com', role: 'Collaborator', department: 'Technology', avatar: '/avatars/03.png' },
+  { id: 'user-1', name: 'Admin User', email: 'admin@example.com', role: 'Admin', department: 'Technology', avatar: 'https://picsum.photos/id/1/100' },
+  { id: 'user-2', name: 'Sofia Davis', email: 'supervisor.tech@example.com', role: 'Supervisor', department: 'Technology', avatar: 'https://picsum.photos/id/2/100' },
+  { id: 'user-3', name: 'Alex Johnson', email: 'collaborator.tech@example.com', role: 'Collaborator', department: 'Technology', avatar: 'https://picsum.photos/id/3/100' },
+  { id: 'user-4', name: 'Maria Garcia', email: 'coordinator.tech@example.com', role: 'Coordinator', department: 'Technology', avatar: 'https://picsum.photos/id/4/100' },
+  { id: 'user-5', name: 'David Smith', email: 'supervisor.mktg@example.com', role: 'Supervisor', department: 'Marketing', avatar: 'https://picsum.photos/id/5/100' },
+  { id: 'user-6', name: 'Emily White', email: 'collaborator.mktg@example.com', role: 'Collaborator', department: 'Marketing', avatar: 'https://picsum.photos/id/6/100' },
+  { id: 'user-7', name: 'James Brown', email: 'collaborator.tech.2@example.com', role: 'Collaborator', department: 'Technology', avatar: 'https://picsum.photos/id/7/100' },
+  { id: 'user-8', name: 'Linda Miller', email: 'collaborator.tech.3@example.com', role: 'Collaborator', department: 'Technology', avatar: 'https://picsum.photos/id/8/100' },
 ];
 
 export const votingEvents: VotingEvent[] = [

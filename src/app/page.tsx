@@ -1,15 +1,20 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/auth-context";
 
 export default function Home() {
   const router = useRouter();
   const { currentUser, loading } = useAuth();
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    if (!loading) {
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    if (isClient && !loading) {
       if (currentUser) {
         switch (currentUser.role) {
             case 'Admin':
@@ -31,7 +36,7 @@ export default function Home() {
         router.replace("/login");
       }
     }
-  }, [router, currentUser, loading]);
+  }, [router, currentUser, loading, isClient]);
 
   return (
      <div className="flex h-screen items-center justify-center">

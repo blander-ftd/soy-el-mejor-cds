@@ -29,7 +29,7 @@ export default function ResultsPage() {
             <CardDescription className="text-lg">Congratulations to our Employee of the Month!</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col items-center gap-4">
-            <Avatar className="h-32 w-32 border-4 border-primary">
+            <Avatar className="h-32 w-32 border-4 border-primary" data-ai-hint="person face">
               <AvatarImage src={winner.avatar} />
               <AvatarFallback>{winner.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
             </Avatar>
