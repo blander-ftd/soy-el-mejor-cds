@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import type { Role } from '@/lib/types';
-import { LayoutDashboard, Users, Vote, Trophy, ShieldCheck, Briefcase, User } from 'lucide-react';
+import { LayoutDashboard, Users, Vote, Trophy, ShieldCheck, Briefcase, User, ClipboardList } from 'lucide-react';
 
 const navLinks = [
   { href: '/admin', label: 'Admin Dashboard', icon: ShieldCheck, roles: ['Admin'] },
@@ -12,6 +12,7 @@ const navLinks = [
   { href: '/coordinator', label: 'Team View', icon: Briefcase, roles: ['Coordinator'] },
   { href: '/collaborator', label: 'Vote', icon: Vote, roles: ['Collaborator'] },
   { href: '/results', label: 'Results', icon: Trophy, roles: ['Admin', 'Supervisor', 'Coordinator', 'Collaborator'] },
+  { href: '/survey', label: 'Survey', icon: ClipboardList, roles: ['Admin', 'Supervisor', 'Coordinator', 'Collaborator'] },
 ];
 
 interface MainNavProps {
