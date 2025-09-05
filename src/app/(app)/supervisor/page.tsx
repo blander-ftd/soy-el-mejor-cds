@@ -1,21 +1,39 @@
+
 "use client";
 
+import React, { useState, useMemo } from 'react';
 import { useAuth } from "@/context/auth-context";
-import { users, nominations, votingEvents } from "@/lib/data";
+import { users, nominations as initialNominations, votingEvents } from "@/lib/data";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
-import { Award, UserCheck } from "lucide-react";
+import { Award, UserCheck, Trash2, Search, CalendarOff } from "lucide-react";
+import { Input } from '@/components/ui/input';
+import type { Nomination } from '@/lib/types';
 
 export default function SupervisorPage() {
     const { currentUser } = useAuth();
     const { toast } = useToast();
+    const [nominations, setNominations] = useState<Nomination[]>(initialNominations);
+    const [searchTerm, setSearchTerm] = useState('');
 
     if (!currentUser) return null;
 
-    const teamMembers = users.filter(user => user.department === currentUser.department && user.role === 'Collaborator');
+    const activeEvent = useMemo(() => 
+        votingEvents.find(event => 
+            (event.department === currentUser.department || event.department === 'All Departments') 
+            && event.status === 'Active'
+        ), [currentUser.department]);
+        
+    const teamMembers = users.filter(user => 
+        user.department === currentUser.department && user.role === 'Collaborator'
+    );
+
+    const filteredTeamMembers = teamMembers.filter(member => 
+        member.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
     
     const myNominations = nominations
         .filter(n => n.nominatedById === currentUser.id)
@@ -26,68 +44,132 @@ export default function SupervisorPage() {
                 ...nom,
                 collaboratorName: collaborator?.name ?? 'Unknown',
                 collaboratorAvatar: collaborator?.avatar ?? '',
-                eventName: event?.month ?? 'Unknown Event'
+                eventName: event?.month ?? 'Unknown Event',
+                eventIsActive: event?.status === 'Active'
             }
-        });
+        })
+        .sort((a, b) => b.nominationDate.getTime() - a.nominationDate.getTime());
     
-    const handleNominate = (collaboratorName: string) => {
+    const handleNominate = (collaborator: (typeof users[0])) => {
+        if (!activeEvent) {
+             toast({
+                variant: "destructive",
+                title: "Nomination Failed",
+                description: "There is no active nomination period.",
+            });
+            return;
+        }
+
+        const isAlreadyNominated = myNominations.some(n => n.collaboratorId === collaborator.id && n.eventId === activeEvent.id);
+        if (isAlreadyNominated) {
+             toast({
+                variant: "destructive",
+                title: "Already Nominated",
+                description: `${collaborator.name} has already been nominated for this event.`,
+            });
+            return;
+        }
+
+        const newNomination: Nomination = {
+            id: `nom-${Date.now()}`,
+            eventId: activeEvent.id,
+            collaboratorId: collaborator.id,
+            nominatedById: currentUser.id,
+            nominationDate: new Date(),
+        };
+
+        setNominations(prev => [...prev, newNomination]);
         toast({
             title: "Nomination Sent!",
-            description: `${collaboratorName} has been nominated for Soy El Mejor.`,
+            description: `${collaborator.name} has been nominated for ${activeEvent.month}.`,
+        });
+    }
+
+    const handleRemoveNomination = (nominationId: string) => {
+        setNominations(prev => prev.filter(n => n.id !== nominationId));
+        toast({
+            title: "Nomination Retracted",
+            description: "The nomination has been successfully removed.",
         });
     }
 
   return (
-    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-      <div className="space-y-6 lg:col-span-2">
+    <div className="space-y-6">
         <div className="space-y-2">
             <h1 className="text-3xl font-bold tracking-tight">Nomination Center: {currentUser.department}</h1>
-            <p className="text-muted-foreground">Select a collaborator from your department to nominate for this month's award.</p>
+            <p className="text-muted-foreground">Nominate outstanding collaborators from your department for the "Soy El Mejor" award.</p>
         </div>
-        
+
+        {!activeEvent ? (
+            <Card>
+                <CardContent className="flex flex-col items-center justify-center gap-4 py-16 text-center">
+                    <CalendarOff className="h-16 w-16 text-muted-foreground" />
+                    <h3 className="text-xl font-semibold">No Active Nomination Period</h3>
+                    <p className="max-w-md text-muted-foreground">
+                        There are no active voting events for your department at the moment. Please check back later.
+                    </p>
+                </CardContent>
+            </Card>
+        ) : (
+             <Card>
+                <CardHeader>
+                    <CardTitle>Nominate for {activeEvent.month}</CardTitle>
+                    <CardDescription>Select a collaborator to nominate. You can search by name below.</CardDescription>
+                    <div className="relative pt-2">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input 
+                            placeholder="Search by name..." 
+                            className="pl-9"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Collaborator</TableHead>
+                                <TableHead className="text-right">Action</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {filteredTeamMembers.map(member => (
+                                <TableRow key={member.id}>
+                                    <TableCell>
+                                        <div className="flex items-center gap-3">
+                                            <Avatar>
+                                                <AvatarImage src={member.avatar} />
+                                                <AvatarFallback>{member.name.charAt(0)}</AvatarFallback>
+                                            </Avatar>
+                                            <span className="font-medium">{member.name}</span>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                        <Button size="sm" onClick={() => handleNominate(member)}>
+                                            <Award className="mr-2 h-4 w-4" />
+                                            Nominate
+                                        </Button>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                             {filteredTeamMembers.length === 0 && (
+                                <TableRow>
+                                    <TableCell colSpan={2} className="text-center text-muted-foreground py-8">
+                                        No collaborators found.
+                                    </TableCell>
+                                </TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
+        )}
+      
         <Card>
             <CardHeader>
-                <CardTitle>Nominate a Collaborator</CardTitle>
-                <CardDescription>Select a collaborator from your department to nominate for this month's award.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Collaborator</TableHead>
-                            <TableHead className="text-right">Action</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {teamMembers.map(member => (
-                            <TableRow key={member.id}>
-                                <TableCell>
-                                    <div className="flex items-center gap-3">
-                                        <Avatar>
-                                            <AvatarImage src={member.avatar} />
-                                            <AvatarFallback>{member.name.charAt(0)}</AvatarFallback>
-                                        </Avatar>
-                                        <span className="font-medium">{member.name}</span>
-                                    </div>
-                                </TableCell>
-                                <TableCell className="text-right">
-                                    <Button size="sm" onClick={() => handleNominate(member.name)}>
-                                        <Award className="mr-2 h-4 w-4" />
-                                        Nominate
-                                    </Button>
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </CardContent>
-        </Card>
-      </div>
-      <div className="space-y-6">
-        <Card className="md:mt-16">
-            <CardHeader>
                 <CardTitle className="flex items-center gap-2"><UserCheck /> Current Nominations</CardTitle>
-                <CardDescription>You have nominated the following collaborators.</CardDescription>
+                <CardDescription>A list of all collaborators you have nominated.</CardDescription>
             </CardHeader>
             <CardContent>
                 <div className="space-y-4">
@@ -99,13 +181,22 @@ export default function SupervisorPage() {
                                      <AvatarFallback>{nom.collaboratorName.charAt(0)}</AvatarFallback>
                                  </Avatar>
                                  <div>
-                                     <span className="font-medium">{nom.collaboratorName}</span>
-                                     <p className="text-xs text-muted-foreground">{nom.eventName}</p>
+                                     <p className="font-medium">{nom.collaboratorName}</p>
+                                     <p className="text-xs text-muted-foreground">
+                                        Nominated for <span className="font-semibold">{nom.eventName}</span> on {new Date(nom.nominationDate).toLocaleDateString()}
+                                     </p>
                                  </div>
                              </div>
-                             <span className="text-sm text-muted-foreground">
-                                {new Date(nom.nominationDate).toLocaleDateString()}
-                             </span>
+                             <Button 
+                                size="sm" 
+                                variant="outline" 
+                                disabled={!nom.eventIsActive}
+                                onClick={() => handleRemoveNomination(nom.id)}
+                                aria-label="Remove nomination"
+                            >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Remove
+                             </Button>
                          </div>
                     ))}
                     {myNominations.length === 0 && (
@@ -114,7 +205,6 @@ export default function SupervisorPage() {
                 </div>
             </CardContent>
         </Card>
-      </div>
     </div>
   );
 }
