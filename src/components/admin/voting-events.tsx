@@ -86,6 +86,8 @@ export function VotingEvents() {
     const form = useForm<EventFormValues>({
         resolver: zodResolver(eventFormSchema),
         defaultValues: {
+            month: "",
+            department: "",
             dateRange: {
                 from: new Date(),
                 to: addDays(new Date(), 20),
