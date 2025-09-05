@@ -11,8 +11,8 @@ const navLinks = [
   { href: '/supervisor', label: 'Nominations', icon: Briefcase, roles: ['Supervisor'] },
   { href: '/coordinator', label: 'Team View', icon: Briefcase, roles: ['Coordinator'] },
   { href: '/collaborator', label: 'Vote', icon: Vote, roles: ['Collaborator'] },
-  { href: '/results', label: 'Results', icon: Trophy, roles: ['Admin', 'Supervisor', 'Coordinator', 'Collaborator'] },
   { href: '/survey', label: 'Survey', icon: ClipboardList, roles: ['Admin', 'Supervisor', 'Coordinator', 'Collaborator'] },
+  { href: '/results', label: 'Results', icon: Trophy, roles: ['Admin', 'Supervisor', 'Coordinator', 'Collaborator'] },
 ];
 
 interface MainNavProps {
