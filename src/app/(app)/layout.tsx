@@ -41,7 +41,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </aside>
 
       <div className="flex flex-col sm:pl-64">
-        <header className="sticky top-0 z-10 flex h-16 items-center justify-end gap-4 border-b border-primary bg-card px-6">
+        <header className="sticky top-0 z-10 flex h-16 items-center justify-end gap-4 border-b border-primary bg-primary px-6">
           <ThemeToggle />
           <UserNav user={currentUser} />
         </header>
