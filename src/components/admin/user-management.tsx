@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Pencil, Trash2, PlusCircle, Upload, UserPlus } from "lucide-react";
+import { MoreHorizontal, Pencil, Trash2, UserPlus, Upload } from "lucide-react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -57,7 +57,7 @@ export function UserManagement() {
 
     const form = useForm<UserFormValues>({
         resolver: zodResolver(userFormSchema),
-        defaultValues: { name: "", email: "" },
+        defaultValues: { name: "", email: "", role: "Collaborator", department: "Technology" },
     });
 
     function onAddUserSubmit(data: UserFormValues) {
@@ -141,7 +141,7 @@ export function UserManagement() {
                             </div>
                              <div className="space-y-2">
                                 <Label htmlFor="role">Role</Label>
-                                <Select onValueChange={(value: Role) => form.setValue('role', value)}>
+                                <Select onValueChange={(value: Role) => form.setValue('role', value)} defaultValue={form.getValues('role')}>
                                     <SelectTrigger id="role">
                                         <SelectValue placeholder="Select a role" />
                                     </SelectTrigger>
@@ -156,7 +156,7 @@ export function UserManagement() {
                             </div>
                              <div className="space-y-2">
                                 <Label htmlFor="department">Department</Label>
-                                <Select onValueChange={(value) => form.setValue('department', value as any)}>
+                                <Select onValueChange={(value) => form.setValue('department', value as any)} defaultValue={form.getValues('department')}>
                                     <SelectTrigger id="department">
                                         <SelectValue placeholder="Select a department" />
                                     </SelectTrigger>
