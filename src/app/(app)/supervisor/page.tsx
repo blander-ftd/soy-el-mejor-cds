@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@/context/auth-context";
-import { users, nominations } from "@/lib/data";
+import { users, nominations, votingEvents } from "@/lib/data";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -21,10 +21,12 @@ export default function SupervisorPage() {
         .filter(n => n.nominatedById === currentUser.id)
         .map(nom => {
             const collaborator = users.find(u => u.id === nom.collaboratorId);
+            const event = votingEvents.find(e => e.id === nom.eventId);
             return {
                 ...nom,
                 collaboratorName: collaborator?.name ?? 'Unknown',
                 collaboratorAvatar: collaborator?.avatar ?? '',
+                eventName: event?.month ?? 'Unknown Event'
             }
         });
     
@@ -39,8 +41,8 @@ export default function SupervisorPage() {
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
       <div className="space-y-6 lg:col-span-2">
         <div className="space-y-2">
-            <h1 className="text-3xl font-bold tracking-tight">Nomination Center</h1>
-            <p className="text-muted-foreground">Department: {currentUser.department}</p>
+            <h1 className="text-3xl font-bold tracking-tight">Nomination Center: {currentUser.department}</h1>
+            <p className="text-muted-foreground">Select a collaborator from your department to nominate for this month's award.</p>
         </div>
         
         <Card>
@@ -85,7 +87,7 @@ export default function SupervisorPage() {
         <Card className="md:mt-16">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2"><UserCheck /> Current Nominations</CardTitle>
-                <CardDescription>You have nominated the following collaborators for July 2024.</CardDescription>
+                <CardDescription>You have nominated the following collaborators.</CardDescription>
             </CardHeader>
             <CardContent>
                 <div className="space-y-4">
@@ -96,10 +98,13 @@ export default function SupervisorPage() {
                                      <AvatarImage src={nom.collaboratorAvatar} />
                                      <AvatarFallback>{nom.collaboratorName.charAt(0)}</AvatarFallback>
                                  </Avatar>
-                                 <span className="font-medium">{nom.collaboratorName}</span>
+                                 <div>
+                                     <span className="font-medium">{nom.collaboratorName}</span>
+                                     <p className="text-xs text-muted-foreground">{nom.eventName}</p>
+                                 </div>
                              </div>
                              <span className="text-sm text-muted-foreground">
-                                Nominated on {new Date(nom.nominationDate).toLocaleDateString()}
+                                {new Date(nom.nominationDate).toLocaleDateString()}
                              </span>
                          </div>
                     ))}
