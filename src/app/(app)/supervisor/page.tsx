@@ -38,7 +38,10 @@ export default function SupervisorPage() {
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
       <div className="space-y-6 lg:col-span-2">
-        <h1 className="text-3xl font-bold tracking-tight">Nomination Center</h1>
+        <div className="space-y-2">
+            <h1 className="text-3xl font-bold tracking-tight">Nomination Center</h1>
+            <p className="text-muted-foreground">Department: {currentUser.department}</p>
+        </div>
         
         <Card>
             <CardHeader>
