@@ -25,6 +25,7 @@ import {
     Dialog,
     DialogContent,
     DialogDescription,
+    DialogFooter,
     DialogHeader,
     DialogTitle,
     DialogTrigger,
@@ -76,7 +77,7 @@ const eventFormSchema = z.object({
 
 type EventFormValues = z.infer<typeof eventFormSchema>;
 
-const defaultFormValues = {
+const defaultFormValues: EventFormValues = {
     month: "",
     department: "",
     dateRange: {
@@ -108,6 +109,8 @@ export function VotingEvents() {
             };
             form.reset({
                 ...editingEvent,
+                month: editingEvent.month || "",
+                department: editingEvent.department || "",
                 dateRange,
                 nominationEndDate: addDays(dateRange.from, 7),
                 votingEndDate: addDays(dateRange.from, 14),
@@ -122,7 +125,7 @@ export function VotingEvents() {
 
     function onSubmit(data: EventFormValues) {
         const isEditing = !!editingEvent;
-        const eventData = {
+        const eventData: VotingEvent = {
             id: editingEvent?.id || `event-${Date.now()}`,
             month: data.month,
             department: data.department,
