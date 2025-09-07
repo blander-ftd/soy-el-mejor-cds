@@ -12,6 +12,7 @@ import AppLogo from '@/components/app-logo';
 import { users } from '@/lib/data';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+import type { User } from '@/lib/types';
 
 export default function LoginPage() {
   const [email, setEmail] = React.useState('');
@@ -43,6 +44,14 @@ export default function LoginPage() {
       }
     }, 1000);
   };
+  
+  const displayUsers = users.reduce((acc, user) => {
+    if (!acc.some(u => u.role === user.role)) {
+        acc.push(user);
+    }
+    return acc;
+  }, [] as User[]);
+
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -63,7 +72,7 @@ export default function LoginPage() {
                   <SelectValue placeholder="Selecciona un usuario para iniciar sesión" />
                 </SelectTrigger>
                 <SelectContent>
-                  {users.map((user) => (
+                  {displayUsers.map((user) => (
                     <SelectItem key={user.id} value={user.email} className="truncate">
                       <span className="truncate">{user.name} ({user.role})</span>
                     </SelectItem>
