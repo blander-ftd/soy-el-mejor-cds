@@ -7,6 +7,7 @@ import { MainNav } from '@/components/main-nav';
 import { UserNav } from '@/components/user-nav';
 import AppLogo from '@/components/app-logo';
 import { ThemeToggle } from '@/components/theme-toggle';
+import LiveClock from '@/components/live-clock';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { currentUser, loading } = useAuth();
@@ -41,9 +42,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </aside>
 
       <div className="flex flex-col sm:pl-64">
-        <header className="sticky top-0 z-10 flex h-16 items-center justify-end gap-4 border-b border-primary bg-primary px-6">
-          <ThemeToggle />
-          <UserNav user={currentUser} />
+        <header className="sticky top-0 z-10 flex h-16 items-center justify-between gap-4 border-b border-primary bg-primary px-6">
+          <LiveClock />
+          <div className="flex items-center gap-4">
+            <ThemeToggle />
+            <UserNav user={currentUser} />
+          </div>
         </header>
         <main className="flex-1 p-4 sm:p-6">{children}</main>
       </div>
