@@ -1,25 +1,88 @@
 "use client"
 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { users } from "@/lib/data";
+import { users, nominations, votingEvents } from "@/lib/data";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Trophy } from "lucide-react";
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
+import { useMemo } from "react";
 
-const winner = users.find(u => u.id === 'user-6'); // Mock winner
-const voteData = [
-  { name: 'Emily W.', votes: 15 },
-  { name: 'James B.', votes: 12 },
-  { name: 'Linda M.', votes: 9 },
-  { name: 'Alex J.', votes: 8 },
-];
+// Helper to find the most recently closed event
+const findLastClosedEvent = () => {
+  return votingEvents
+    .filter(event => event.status === 'Closed' && event.endDate)
+    .sort((a, b) => b.endDate!.getTime() - a.endDate!.getTime())[0];
+};
+
+// Helper to get nominations for a specific event
+const getEventNominations = (eventId: string) => {
+  return nominations.filter(n => n.eventId === eventId);
+};
+
+// Helper to find the winner based on most nominations for an event
+const findWinnerFromEvent = (eventId: string) => {
+  const eventNominations = getEventNominations(eventId);
+  if (eventNominations.length === 0) return null;
+
+  const nominationCounts = eventNominations.reduce((acc, nom) => {
+    acc[nom.collaboratorId] = (acc[nom.collaboratorId] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const winnerId = Object.keys(nominationCounts).reduce((a, b) => nominationCounts[a] > nominationCounts[b] ? a : b);
+  
+  return users.find(u => u.id === winnerId) || null;
+};
+
+// Mock data generation for the chart based on event nominations
+const generateVoteData = (eventId: string) => {
+    const eventNominations = getEventNominations(eventId);
+    const nomineeIds = [...new Set(eventNominations.map(n => n.collaboratorId))];
+    
+    // Simulate votes for nominees - giving winner the most votes
+    const winnerId = findWinnerFromEvent(eventId)?.id;
+
+    return nomineeIds.map(id => {
+        const user = users.find(u => u.id === id);
+        const name = user ? user.name.split(' ')[0] + ' ' + user.name.split(' ')[1][0] + '.' : 'Unknown';
+        let votes = Math.floor(Math.random() * 12) + 5; // random votes between 5 and 16
+        if(id === winnerId) {
+            votes = Math.floor(Math.random() * 5) + 15; // winner gets more votes (15-19)
+        }
+        return { name, votes };
+    }).sort((a, b) => b.votes - a.votes);
+};
+
 
 export default function ResultsPage() {
-  if (!winner) return <p>No winner selected yet.</p>;
+
+    const { winner, voteData, lastEvent } = useMemo(() => {
+        const lastEvent = findLastClosedEvent();
+        if (!lastEvent) {
+            return { winner: null, voteData: [], lastEvent: null };
+        }
+        const winner = findWinnerFromEvent(lastEvent.id);
+        const voteData = winner ? generateVoteData(lastEvent.id) : [];
+        return { winner, voteData, lastEvent };
+    }, []);
+
+    if (!winner || !lastEvent) {
+        return (
+            <div className="space-y-6">
+                <h1 className="text-3xl font-bold tracking-tight">Results</h1>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>No Results Available</CardTitle>
+                        <CardDescription>There are no results from previous events to display yet.</CardDescription>
+                    </CardHeader>
+                </Card>
+            </div>
+        );
+    }
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold tracking-tight">This Month's Winner</h1>
+      <h1 className="text-3xl font-bold tracking-tight">Winner for {lastEvent.month}</h1>
 
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">
@@ -38,7 +101,7 @@ export default function ResultsPage() {
               <p className="text-xl text-muted-foreground">{winner.department}</p>
             </div>
             <p className="max-w-prose text-center text-muted-foreground italic p-4 bg-muted rounded-lg">
-              "For her outstanding contribution to the new marketing campaign and for always going the extra mile. Your hard work inspires us all. Well done, Emily!"
+              "For their outstanding contribution and for always going the extra mile. Your hard work inspires us all. Well done, {winner.name.split(' ')[0]}!"
             </p>
           </CardContent>
         </Card>
@@ -46,7 +109,7 @@ export default function ResultsPage() {
         <Card>
             <CardHeader>
                 <CardTitle>Voting Results</CardTitle>
-                <CardDescription>Final vote count for the top nominees.</CardDescription>
+                <CardDescription>Final vote count for the top nominees in {lastEvent.month}.</CardDescription>
             </CardHeader>
             <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
