@@ -11,6 +11,7 @@ export const users: User[] = [
   { id: 'user-6', name: 'Emily White', email: 'collaborator.mktg@example.com', role: 'Collaborator', department: 'Marketing', avatar: 'https://picsum.photos/id/6/100' },
   { id: 'user-7', name: 'James Brown', email: 'collaborator.tech.2@example.com', role: 'Collaborator', department: 'Technology', avatar: 'https://picsum.photos/id/7/100' },
   { id: 'user-8', name: 'Linda Miller', email: 'collaborator.tech.3@example.com', role: 'Collaborator', department: 'Technology', avatar: 'https://picsum.photos/id/8/100' },
+  { id: 'user-9', name: 'Casey Jones', email: 'collaborator.tech.4@example.com', role: 'Collaborator', department: 'Technology', avatar: 'https://picsum.photos/id/9/100' },
 ];
 
 export const votingEvents: VotingEvent[] = [
