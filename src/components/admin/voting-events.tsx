@@ -193,273 +193,275 @@ export function VotingEvents() {
                         Create Event
                     </Button>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-3xl">
-                    <DialogHeader>
+                <DialogContent className="sm:max-w-3xl max-h-[90vh] flex flex-col">
+                    <DialogHeader className="flex-shrink-0">
                         <DialogTitle>{editingEvent ? 'Edit' : 'Create New'} Voting Event</DialogTitle>
                         <DialogDescription>
                            {editingEvent ? 'Update the event details below.' : 'Define the parameters and timeline for the new voting event.'}
                         </DialogDescription>
                     </DialogHeader>
-                    <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <FormField
-                                    control={form.control}
-                                    name="month"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Event Name</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="e.g., August 2024" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="department"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Department</FormLabel>
-                                            <Select onValueChange={field.onChange} value={field.value}>
-                                                <FormControl>
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Select a department" />
-                                                    </SelectTrigger>
-                                                </FormControl>
-                                                <SelectContent>
-                                                    <SelectItem value="All Departments">All Departments</SelectItem>
-                                                    {departments.map(dep => (
-                                                        <SelectItem key={dep} value={dep}>{dep}</SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            </div>
-
-                             <FormField
-                                control={form.control}
-                                name="dateRange"
-                                render={({ field }) => (
-                                    <FormItem className="flex flex-col">
-                                        <FormLabel>Event Duration</FormLabel>
-                                        <Popover>
-                                            <PopoverTrigger asChild>
-                                                <FormControl>
-                                                <Button
-                                                    id="date"
-                                                    variant={"outline"}
-                                                    className={cn(
-                                                    "justify-start text-left font-normal",
-                                                    !field.value?.from && "text-muted-foreground"
-                                                    )}
-                                                >
-                                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                                    {field.value?.from ? (
-                                                    field.value.to ? (
-                                                        <>
-                                                        {format(field.value.from, "LLL dd, y")} -{" "}
-                                                        {format(field.value.to, "LLL dd, y")}
-                                                        </>
-                                                    ) : (
-                                                        format(field.value.from, "LLL dd, y")
-                                                    )
-                                                    ) : (
-                                                    <span>Pick a date range</span>
-                                                    )}
-                                                </Button>
-                                                </FormControl>
-                                            </PopoverTrigger>
-                                            <PopoverContent className="w-auto p-0" align="start">
-                                                <Calendar
-                                                    initialFocus
-                                                    mode="range"
-                                                    defaultMonth={field.value?.from}
-                                                    selected={field.value}
-                                                    onSelect={field.onChange}
-                                                    numberOfMonths={2}
-                                                />
-                                            </PopoverContent>
-                                        </Popover>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-t pt-4">
-                                <FormField
-                                    control={form.control}
-                                    name="nominationEndDate"
-                                    render={({ field }) => (
-                                        <FormItem className="flex flex-col">
-                                        <FormLabel>1. Nomination Phase End</FormLabel>
-                                        <Popover>
-                                            <PopoverTrigger asChild>
-                                            <FormControl>
-                                                <Button
-                                                variant={"outline"}
-                                                className={cn(
-                                                    "justify-start text-left font-normal",
-                                                    !field.value && "text-muted-foreground"
-                                                )}
-                                                >
-                                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                                {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
-                                                </Button>
-                                            </FormControl>
-                                            </PopoverTrigger>
-                                            <PopoverContent className="w-auto p-0">
-                                            <Calendar
-                                                mode="single"
-                                                selected={field.value}
-                                                onSelect={field.onChange}
-                                                disabled={(date) => date < (form.getValues().dateRange.from ?? new Date()) || date > (form.getValues().dateRange.to ?? new Date())}
-                                                initialFocus
-                                            />
-                                            </PopoverContent>
-                                        </Popover>
-                                        <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="votingEndDate"
-                                    render={({ field }) => (
-                                        <FormItem className="flex flex-col">
-                                        <FormLabel>2. Voting Phase End</FormLabel>
-                                        <Popover>
-                                            <PopoverTrigger asChild>
-                                            <FormControl>
-                                                <Button
-                                                variant={"outline"}
-                                                className={cn(
-                                                    "justify-start text-left font-normal",
-                                                    !field.value && "text-muted-foreground"
-                                                )}
-                                                >
-                                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                                {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
-                                                </Button>
-                                            </FormControl>
-                                            </PopoverTrigger>
-                                            <PopoverContent className="w-auto p-0">
-                                            <Calendar
-                                                mode="single"
-                                                selected={field.value}
-                                                onSelect={field.onChange}
-                                                disabled={(date) => date < (form.getValues().nominationEndDate ?? new Date()) || date > (form.getValues().dateRange.to ?? new Date())}
-                                                initialFocus
-                                            />
-                                            </PopoverContent>
-                                        </Popover>
-                                        <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="evaluationEndDate"
-                                    render={({ field }) => (
-                                        <FormItem className="flex flex-col">
-                                        <FormLabel>3. Evaluation Phase End</FormLabel>
-                                         <Popover>
-                                            <PopoverTrigger asChild>
-                                            <FormControl>
-                                                <Button
-                                                variant={"outline"}
-                                                className={cn(
-                                                    "justify-start text-left font-normal",
-                                                    !field.value && "text-muted-foreground"
-                                                )}
-                                                >
-                                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                                {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
-                                                </Button>
-                                            </FormControl>
-                                            </PopoverTrigger>
-                                            <PopoverContent className="w-auto p-0">
-                                            <Calendar
-                                                mode="single"
-                                                selected={field.value}
-                                                onSelect={field.onChange}
-                                                disabled={(date) => date < (form.getValues().votingEndDate ?? new Date()) || date > (form.getValues().dateRange.to ?? new Date())}
-                                                initialFocus
-                                            />
-                                            </PopoverContent>
-                                        </Popover>
-                                        <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            </div>
-
-                            <div className="space-y-4 border-t pt-4">
-                                <FormLabel>Survey Questions (Optional)</FormLabel>
+                    <div className="flex-grow overflow-y-auto pr-6 -mr-6">
+                        <Form {...form}>
+                            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <FormField
                                         control={form.control}
-                                        name="surveyQuestion1"
+                                        name="month"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel className="font-normal text-muted-foreground">Question 1</FormLabel>
-                                                <FormControl><Textarea placeholder="Enter survey question..." {...field} /></FormControl>
+                                                <FormLabel>Event Name</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="e.g., August 2024" {...field} />
+                                                </FormControl>
+                                                <FormMessage />
                                             </FormItem>
                                         )}
                                     />
-                                     <FormField
+                                    <FormField
                                         control={form.control}
-                                        name="surveyQuestion2"
+                                        name="department"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel className="font-normal text-muted-foreground">Question 2</FormLabel>
-                                                <FormControl><Textarea placeholder="Enter survey question..." {...field} /></FormControl>
-                                            </FormItem>
-                                        )}
-                                    />
-                                     <FormField
-                                        control={form.control}
-                                        name="surveyQuestion3"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel className="font-normal text-muted-foreground">Question 3</FormLabel>
-                                                <FormControl><Textarea placeholder="Enter survey question..." {...field} /></FormControl>
-                                            </FormItem>
-                                        )}
-                                    />
-                                     <FormField
-                                        control={form.control}
-                                        name="surveyQuestion4"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel className="font-normal text-muted-foreground">Question 4</FormLabel>
-                                                <FormControl><Textarea placeholder="Enter survey question..." {...field} /></FormControl>
-                                            </FormItem>
-                                        )}
-                                    />
-                                     <FormField
-                                        control={form.control}
-                                        name="surveyQuestion5"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel className="font-normal text-muted-foreground">Question 5</FormLabel>
-                                                <FormControl><Textarea placeholder="Enter survey question..." {...field} /></FormControl>
+                                                <FormLabel>Department</FormLabel>
+                                                <Select onValueChange={field.onChange} value={field.value}>
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Select a department" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        <SelectItem value="All Departments">All Departments</SelectItem>
+                                                        {departments.map(dep => (
+                                                            <SelectItem key={dep} value={dep}>{dep}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
                                             </FormItem>
                                         )}
                                     />
                                 </div>
-                            </div>
-                            
-                            <DialogFooter>
-                                <Button type="button" variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
-                                <Button type="submit">{editingEvent ? 'Save Changes' : 'Create Event'}</Button>
-                            </DialogFooter>
-                        </form>
-                    </Form>
+
+                                <FormField
+                                    control={form.control}
+                                    name="dateRange"
+                                    render={({ field }) => (
+                                        <FormItem className="flex flex-col">
+                                            <FormLabel>Event Duration</FormLabel>
+                                            <Popover>
+                                                <PopoverTrigger asChild>
+                                                    <FormControl>
+                                                    <Button
+                                                        id="date"
+                                                        variant={"outline"}
+                                                        className={cn(
+                                                        "justify-start text-left font-normal",
+                                                        !field.value?.from && "text-muted-foreground"
+                                                        )}
+                                                    >
+                                                        <CalendarIcon className="mr-2 h-4 w-4" />
+                                                        {field.value?.from ? (
+                                                        field.value.to ? (
+                                                            <>
+                                                            {format(field.value.from, "LLL dd, y")} -{" "}
+                                                            {format(field.value.to, "LLL dd, y")}
+                                                            </>
+                                                        ) : (
+                                                            format(field.value.from, "LLL dd, y")
+                                                        )
+                                                        ) : (
+                                                        <span>Pick a date range</span>
+                                                        )}
+                                                    </Button>
+                                                    </FormControl>
+                                                </PopoverTrigger>
+                                                <PopoverContent className="w-auto p-0" align="start">
+                                                    <Calendar
+                                                        initialFocus
+                                                        mode="range"
+                                                        defaultMonth={field.value?.from}
+                                                        selected={field.value}
+                                                        onSelect={field.onChange}
+                                                        numberOfMonths={2}
+                                                    />
+                                                </PopoverContent>
+                                            </Popover>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-t pt-4">
+                                    <FormField
+                                        control={form.control}
+                                        name="nominationEndDate"
+                                        render={({ field }) => (
+                                            <FormItem className="flex flex-col">
+                                            <FormLabel>1. Nomination Phase End</FormLabel>
+                                            <Popover>
+                                                <PopoverTrigger asChild>
+                                                <FormControl>
+                                                    <Button
+                                                    variant={"outline"}
+                                                    className={cn(
+                                                        "justify-start text-left font-normal",
+                                                        !field.value && "text-muted-foreground"
+                                                    )}
+                                                    >
+                                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                                    {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                                                    </Button>
+                                                </FormControl>
+                                                </PopoverTrigger>
+                                                <PopoverContent className="w-auto p-0">
+                                                <Calendar
+                                                    mode="single"
+                                                    selected={field.value}
+                                                    onSelect={field.onChange}
+                                                    disabled={(date) => date < (form.getValues().dateRange.from ?? new Date()) || date > (form.getValues().dateRange.to ?? new Date())}
+                                                    initialFocus
+                                                />
+                                                </PopoverContent>
+                                            </Popover>
+                                            <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="votingEndDate"
+                                        render={({ field }) => (
+                                            <FormItem className="flex flex-col">
+                                            <FormLabel>2. Voting Phase End</FormLabel>
+                                            <Popover>
+                                                <PopoverTrigger asChild>
+                                                <FormControl>
+                                                    <Button
+                                                    variant={"outline"}
+                                                    className={cn(
+                                                        "justify-start text-left font-normal",
+                                                        !field.value && "text-muted-foreground"
+                                                    )}
+                                                    >
+                                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                                    {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                                                    </Button>
+                                                </FormControl>
+                                                </PopoverTrigger>
+                                                <PopoverContent className="w-auto p-0">
+                                                <Calendar
+                                                    mode="single"
+                                                    selected={field.value}
+                                                    onSelect={field.onChange}
+                                                    disabled={(date) => date < (form.getValues().nominationEndDate ?? new Date()) || date > (form.getValues().dateRange.to ?? new Date())}
+                                                    initialFocus
+                                                />
+                                                </PopoverContent>
+                                            </Popover>
+                                            <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="evaluationEndDate"
+                                        render={({ field }) => (
+                                            <FormItem className="flex flex-col">
+                                            <FormLabel>3. Evaluation Phase End</FormLabel>
+                                            <Popover>
+                                                <PopoverTrigger asChild>
+                                                <FormControl>
+                                                    <Button
+                                                    variant={"outline"}
+                                                    className={cn(
+                                                        "justify-start text-left font-normal",
+                                                        !field.value && "text-muted-foreground"
+                                                    )}
+                                                    >
+                                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                                    {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                                                    </Button>
+                                                </FormControl>
+                                                </PopoverTrigger>
+                                                <PopoverContent className="w-auto p-0">
+                                                <Calendar
+                                                    mode="single"
+                                                    selected={field.value}
+                                                    onSelect={field.onChange}
+                                                    disabled={(date) => date < (form.getValues().votingEndDate ?? new Date()) || date > (form.getValues().dateRange.to ?? new Date())}
+                                                    initialFocus
+                                                />
+                                                </PopoverContent>
+                                            </Popover>
+                                            <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+
+                                <div className="space-y-4 border-t pt-4">
+                                    <FormLabel>Survey Questions (Optional)</FormLabel>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <FormField
+                                            control={form.control}
+                                            name="surveyQuestion1"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel className="font-normal text-muted-foreground">Question 1</FormLabel>
+                                                    <FormControl><Textarea placeholder="Enter survey question..." {...field} /></FormControl>
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="surveyQuestion2"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel className="font-normal text-muted-foreground">Question 2</FormLabel>
+                                                    <FormControl><Textarea placeholder="Enter survey question..." {...field} /></FormControl>
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="surveyQuestion3"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel className="font-normal text-muted-foreground">Question 3</FormLabel>
+                                                    <FormControl><Textarea placeholder="Enter survey question..." {...field} /></FormControl>
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="surveyQuestion4"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel className="font-normal text-muted-foreground">Question 4</FormLabel>
+                                                    <FormControl><Textarea placeholder="Enter survey question..." {...field} /></FormControl>
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="surveyQuestion5"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel className="font-normal text-muted-foreground">Question 5</FormLabel>
+                                                    <FormControl><Textarea placeholder="Enter survey question..." {...field} /></FormControl>
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
+                                </div>
+                                
+                                <DialogFooter className="flex-shrink-0 pt-4 border-t">
+                                    <Button type="button" variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
+                                    <Button type="submit">{editingEvent ? 'Save Changes' : 'Create Event'}</Button>
+                                </DialogFooter>
+                            </form>
+                        </Form>
+                    </div>
                 </DialogContent>
             </Dialog>
         </div>
@@ -514,5 +516,3 @@ export function VotingEvents() {
     </div>
   );
 }
-
-    
