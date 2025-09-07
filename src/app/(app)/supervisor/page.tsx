@@ -27,25 +27,18 @@ export default function SupervisorPage() {
             && event.status === 'Active'
         ), [currentUser.department]);
         
-    const nominatedForActiveEventIds = useMemo(() => {
-        if (!activeEvent) return [];
-        return nominations
-            .filter(n => n.eventId === activeEvent.id)
-            .map(n => n.collaboratorId);
-    }, [nominations, activeEvent]);
-
     const teamMembers = useMemo(() => 
         users.filter(user => 
             user.department === currentUser.department && user.role === 'Collaborator'
         ), [currentUser.department]);
 
-    const filteredAndAvailableTeamMembers = useMemo(() => 
-        teamMembers.filter(member => 
-            !nominatedForActiveEventIds.includes(member.id) &&
-            member.name.toLowerCase().includes(searchTerm.toLowerCase())
-        ), [teamMembers, nominatedForActiveEventIds, searchTerm]);
-    
-    const myNominations = nominations
+    const nominationLimit = useMemo(() => {
+        const n = teamMembers.length;
+        if (n <= 1) return 0;
+        return Math.min(n - 1, 3);
+    }, [teamMembers.length]);
+        
+    const myNominations = useMemo(() => nominations
         .filter(n => n.nominatedById === currentUser.id)
         .map(nom => {
             const collaborator = users.find(u => u.id === nom.collaboratorId);
@@ -58,7 +51,26 @@ export default function SupervisorPage() {
                 eventIsActive: event?.status === 'Active'
             }
         })
-        .sort((a, b) => b.nominationDate.getTime() - a.nominationDate.getTime());
+        .sort((a, b) => b.nominationDate.getTime() - a.nominationDate.getTime()), [nominations, currentUser.id]);
+
+    const myNominationsForActiveEvent = useMemo(() => {
+        if (!activeEvent) return [];
+        return myNominations.filter(n => n.eventId === activeEvent.id);
+    }, [myNominations, activeEvent]);
+
+    const nominatedForActiveEventIds = useMemo(() => {
+        if (!activeEvent) return [];
+        return nominations
+            .filter(n => n.eventId === activeEvent.id)
+            .map(n => n.collaboratorId);
+    }, [nominations, activeEvent]);
+
+    const filteredAndAvailableTeamMembers = useMemo(() => 
+        teamMembers.filter(member => 
+            !nominatedForActiveEventIds.includes(member.id) &&
+            member.name.toLowerCase().includes(searchTerm.toLowerCase())
+        ), [teamMembers, nominatedForActiveEventIds, searchTerm]);
+    
     
     const handleNominate = (collaborator: User) => {
         if (!activeEvent) {
@@ -70,6 +82,15 @@ export default function SupervisorPage() {
             return;
         }
 
+        if (myNominationsForActiveEvent.length >= nominationLimit) {
+            toast({
+                variant: "destructive",
+                title: "Nomination Limit Reached",
+                description: `You can only nominate up to ${nominationLimit} collaborator(s) for this event.`,
+            });
+            return;
+        }
+        
         const isAlreadyNominated = myNominations.some(n => n.collaboratorId === collaborator.id && n.eventId === activeEvent.id);
         if (isAlreadyNominated) {
              toast({
@@ -124,7 +145,10 @@ export default function SupervisorPage() {
              <Card>
                 <CardHeader>
                     <CardTitle>Nominate for {activeEvent.month}</CardTitle>
-                    <CardDescription>Select a collaborator to nominate. You can search by name below.</CardDescription>
+                    <CardDescription>
+                        Select a collaborator to nominate. You can nominate up to {nominationLimit} collaborator(s). 
+                        ({myNominationsForActiveEvent.length}/{nominationLimit} nominated)
+                    </CardDescription>
                     <div className="relative pt-2">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input 
@@ -156,7 +180,11 @@ export default function SupervisorPage() {
                                         </div>
                                     </TableCell>
                                     <TableCell className="text-right">
-                                        <Button size="sm" onClick={() => handleNominate(member)}>
+                                        <Button 
+                                            size="sm" 
+                                            onClick={() => handleNominate(member)}
+                                            disabled={myNominationsForActiveEvent.length >= nominationLimit}
+                                        >
                                             <Award className="mr-2 h-4 w-4" />
                                             Nominate
                                         </Button>
