@@ -11,7 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { Award, UserCheck, Trash2, Search, CalendarOff } from "lucide-react";
 import { Input } from '@/components/ui/input';
-import type { Nomination } from '@/lib/types';
+import type { Nomination, User } from '@/lib/types';
 
 export default function SupervisorPage() {
     const { currentUser } = useAuth();
@@ -34,15 +34,16 @@ export default function SupervisorPage() {
             .map(n => n.collaboratorId);
     }, [nominations, activeEvent]);
 
-    const teamMembers = users.filter(user => 
-        user.department === currentUser.department 
-        && user.role === 'Collaborator'
-        && !nominatedForActiveEventIds.includes(user.id) // Exclude already nominated
-    );
+    const teamMembers = useMemo(() => 
+        users.filter(user => 
+            user.department === currentUser.department && user.role === 'Collaborator'
+        ), [currentUser.department]);
 
-    const filteredTeamMembers = teamMembers.filter(member => 
-        member.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredAndAvailableTeamMembers = useMemo(() => 
+        teamMembers.filter(member => 
+            !nominatedForActiveEventIds.includes(member.id) &&
+            member.name.toLowerCase().includes(searchTerm.toLowerCase())
+        ), [teamMembers, nominatedForActiveEventIds, searchTerm]);
     
     const myNominations = nominations
         .filter(n => n.nominatedById === currentUser.id)
@@ -59,7 +60,7 @@ export default function SupervisorPage() {
         })
         .sort((a, b) => b.nominationDate.getTime() - a.nominationDate.getTime());
     
-    const handleNominate = (collaborator: (typeof users[0])) => {
+    const handleNominate = (collaborator: User) => {
         if (!activeEvent) {
              toast({
                 variant: "destructive",
@@ -143,7 +144,7 @@ export default function SupervisorPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {filteredTeamMembers.map(member => (
+                            {filteredAndAvailableTeamMembers.map(member => (
                                 <TableRow key={member.id}>
                                     <TableCell>
                                         <div className="flex items-center gap-3">
@@ -162,10 +163,10 @@ export default function SupervisorPage() {
                                     </TableCell>
                                 </TableRow>
                             ))}
-                             {filteredTeamMembers.length === 0 && (
+                             {filteredAndAvailableTeamMembers.length === 0 && (
                                 <TableRow>
                                     <TableCell colSpan={2} className="text-center text-muted-foreground py-8">
-                                        {teamMembers.length > 0 ? "No collaborators found matching your search." : "All collaborators have been nominated."}
+                                        {teamMembers.length > 0 ? "No collaborators found matching your search." : "All eligible collaborators have been nominated."}
                                     </TableCell>
                                 </TableRow>
                             )}
