@@ -13,13 +13,22 @@ export const users: User[] = [
   { id: 'user-8', name: 'Linda Miller', email: 'collaborator.tech.3@example.com', role: 'Collaborator', department: 'Technology', avatar: 'https://picsum.photos/id/8/100' },
   { id: 'user-9', name: 'Casey Jones', email: 'collaborator.tech.4@example.com', role: 'Collaborator', department: 'Technology', avatar: 'https://picsum.photos/id/9/100' },
   { id: 'user-10', name: 'Jordan Taylor', email: 'collaborator.tech.5@example.com', role: 'Collaborator', department: 'Technology', avatar: 'https://picsum.photos/id/10/100' },
+  { id: 'user-11', name: 'Morgan Lee', email: 'collaborator.tech.6@example.com', role: 'Collaborator', department: 'Technology', avatar: 'https://picsum.photos/id/11/100' },
+];
+
+const defaultSurveyQuestions = [
+    { title: 'Teamwork', body: 'How well does this person collaborate with others?' },
+    { title: 'Innovation', body: 'Does this person bring new and creative ideas to the table?' },
+    { title: 'Leadership', body: 'Does this person demonstrate leadership qualities, even without a formal title?' },
+    { title: 'Problem Solving', body: 'How effective is this person at overcoming challenges and finding solutions?' },
+    { title: 'Overall Contribution', body: 'What has been this person\'s most significant contribution this month?' }
 ];
 
 export const votingEvents: VotingEvent[] = [
-    { id: 'event-1', department: 'Technology', status: 'Active', month: 'July 2024', startDate: new Date('2024-07-01'), endDate: new Date('2024-07-25') },
-    { id: 'event-2', department: 'Marketing', status: 'Pending', month: 'July 2024' },
-    { id: 'event-3', department: 'All Departments', status: 'Closed', month: 'June 2024', startDate: new Date('2024-06-01'), endDate: new Date('2024-06-25') },
-    { id: 'event-4', department: 'Human Resources', status: 'Closed', month: 'June 2024', startDate: new Date('2024-06-01'), endDate: new Date('2024-06-25') },
+    { id: 'event-1', department: 'Technology', status: 'Active', month: 'July 2024', startDate: new Date('2024-07-01'), endDate: new Date('2024-07-25'), surveyQuestions: defaultSurveyQuestions },
+    { id: 'event-2', department: 'Marketing', status: 'Pending', month: 'July 2024', surveyQuestions: [] },
+    { id: 'event-3', department: 'All Departments', status: 'Closed', month: 'June 2024', startDate: new Date('2024-06-01'), endDate: new Date('2024-06-25'), surveyQuestions: defaultSurveyQuestions },
+    { id: 'event-4', department: 'Human Resources', status: 'Closed', month: 'June 2024', startDate: new Date('2024-06-01'), endDate: new Date('2024-06-25'), surveyQuestions: defaultSurveyQuestions },
 ];
 
 export const nominations: Nomination[] = [

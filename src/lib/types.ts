@@ -11,6 +11,11 @@ export interface User {
   avatar: string;
 }
 
+export interface SurveyQuestion {
+  title: string;
+  body: string;
+}
+
 export interface VotingEvent {
   id:string;
   department?: Department | "All Departments";
@@ -18,7 +23,7 @@ export interface VotingEvent {
   startDate?: Date;
   endDate?: Date;
   month: string;
-  surveyQuestions?: string[];
+  surveyQuestions: SurveyQuestion[];
 }
 
 export interface Nomination {
