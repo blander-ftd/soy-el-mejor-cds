@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -51,7 +52,7 @@ export default function SurveyPage() {
   const handleSliderChange = (nomineeId: string, questionIndex: number, value: number[]) => {
     setEvaluations(prev => ({
       ...prev,
-      [nomineeId]: (prev[nomineeId] || Array(surveyQuestions.length).fill(3)).map((v, i) => i === questionIndex ? value[0] : v)
+      [nomineeId]: (prev[nomineeId] || Array(surveyQuestions.length).fill(5)).map((v, i) => i === questionIndex ? value[0] : v)
     }));
   };
   
@@ -131,12 +132,12 @@ export default function SurveyPage() {
                            <Slider
                                 id={`slider-${index}-${qIndex}`}
                                 min={1}
-                                max={5}
+                                max={10}
                                 step={1}
-                                value={[evaluations[nominee.id]?.[qIndex] ?? 3]}
+                                value={[evaluations[nominee.id]?.[qIndex] ?? 5]}
                                 onValueChange={(value) => handleSliderChange(nominee.id, qIndex, value)}
                            />
-                           <span className="text-xs font-bold w-4 text-center">5</span>
+                           <span className="text-xs font-bold w-4 text-center">10</span>
                       </div>
                     </div>
                   ))}
