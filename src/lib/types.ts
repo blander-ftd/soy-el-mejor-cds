@@ -12,12 +12,13 @@ export interface User {
 }
 
 export interface VotingEvent {
-  id: string;
+  id:string;
   department?: Department | "All Departments";
   status: "Pending" | "Active" | "Closed";
   startDate?: Date;
   endDate?: Date;
   month: string;
+  surveyQuestions?: string[];
 }
 
 export interface Nomination {

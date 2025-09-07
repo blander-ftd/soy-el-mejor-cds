@@ -12,6 +12,7 @@ export const users: User[] = [
   { id: 'user-7', name: 'James Brown', email: 'collaborator.tech.2@example.com', role: 'Collaborator', department: 'Technology', avatar: 'https://picsum.photos/id/7/100' },
   { id: 'user-8', name: 'Linda Miller', email: 'collaborator.tech.3@example.com', role: 'Collaborator', department: 'Technology', avatar: 'https://picsum.photos/id/8/100' },
   { id: 'user-9', name: 'Casey Jones', email: 'collaborator.tech.4@example.com', role: 'Collaborator', department: 'Technology', avatar: 'https://picsum.photos/id/9/100' },
+  { id: 'user-10', name: 'Jordan Taylor', email: 'collaborator.tech.5@example.com', role: 'Collaborator', department: 'Technology', avatar: 'https://picsum.photos/id/10/100' },
 ];
 
 export const votingEvents: VotingEvent[] = [
@@ -24,7 +25,6 @@ export const votingEvents: VotingEvent[] = [
 export const nominations: Nomination[] = [
     { id: 'nom-1', eventId: 'event-1', collaboratorId: 'user-3', nominatedById: 'user-2', nominationDate: new Date() },
     { id: 'nom-2', eventId: 'event-1', collaboratorId: 'user-7', nominatedById: 'user-2', nominationDate: new Date() },
-    { id: 'nom-3', eventId: 'event-1', collaboratorId: 'user-8', nominatedById: 'user-2', nominationDate: new Date() },
 ];
 
 export const votes: Vote[] = [

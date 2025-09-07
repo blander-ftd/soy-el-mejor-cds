@@ -55,6 +55,11 @@ const eventFormSchema = z.object({
     nominationEndDate: z.date({ required_error: "Nomination end date is required."}),
     votingEndDate: z.date({ required_error: "Voting end date is required."}),
     evaluationEndDate: z.date({ required_error: "Evaluation end date is required."}),
+    surveyQuestion1: z.string().optional(),
+    surveyQuestion2: z.string().optional(),
+    surveyQuestion3: z.string().optional(),
+    surveyQuestion4: z.string().optional(),
+    surveyQuestion5: z.string().optional(),
 }).refine(data => data.dateRange.to > data.dateRange.from, {
     message: "End date must be after start date.",
     path: ["dateRange"],
@@ -77,7 +82,7 @@ const eventFormSchema = z.object({
 
 type EventFormValues = z.infer<typeof eventFormSchema>;
 
-const defaultFormValues: EventFormValues = {
+const defaultFormValues: Partial<EventFormValues> = {
     month: "",
     department: "",
     dateRange: {
@@ -87,6 +92,11 @@ const defaultFormValues: EventFormValues = {
     nominationEndDate: addDays(new Date(), 7),
     votingEndDate: addDays(new Date(), 14),
     evaluationEndDate: addDays(new Date(), 20),
+    surveyQuestion1: "",
+    surveyQuestion2: "",
+    surveyQuestion3: "",
+    surveyQuestion4: "",
+    surveyQuestion5: "",
 }
 
 
@@ -114,7 +124,12 @@ export function VotingEvents() {
                 dateRange,
                 nominationEndDate: addDays(dateRange.from, 7),
                 votingEndDate: addDays(dateRange.from, 14),
-                evaluationEndDate: dateRange.to
+                evaluationEndDate: dateRange.to,
+                surveyQuestion1: editingEvent.surveyQuestions?.[0] || "",
+                surveyQuestion2: editingEvent.surveyQuestions?.[1] || "",
+                surveyQuestion3: editingEvent.surveyQuestions?.[2] || "",
+                surveyQuestion4: editingEvent.surveyQuestions?.[3] || "",
+                surveyQuestion5: editingEvent.surveyQuestions?.[4] || "",
             });
         } else if (!open) {
             form.reset(defaultFormValues);
@@ -125,6 +140,15 @@ export function VotingEvents() {
 
     function onSubmit(data: EventFormValues) {
         const isEditing = !!editingEvent;
+        
+        const surveyQuestions = [
+            data.surveyQuestion1,
+            data.surveyQuestion2,
+            data.surveyQuestion3,
+            data.surveyQuestion4,
+            data.surveyQuestion5,
+        ].filter((q): q is string => typeof q === 'string' && q.length > 0);
+
         const eventData: VotingEvent = {
             id: editingEvent?.id || `event-${Date.now()}`,
             month: data.month,
@@ -132,6 +156,7 @@ export function VotingEvents() {
             startDate: data.dateRange.from,
             endDate: data.dateRange.to,
             status: editingEvent?.status || "Pending",
+            surveyQuestions: surveyQuestions,
         };
 
         setVotingEvents(prev => 
@@ -168,7 +193,7 @@ export function VotingEvents() {
                         Create Event
                     </Button>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-2xl">
+                <DialogContent className="sm:max-w-3xl">
                     <DialogHeader>
                         <DialogTitle>{editingEvent ? 'Edit' : 'Create New'} Voting Event</DialogTitle>
                         <DialogDescription>
@@ -372,6 +397,63 @@ export function VotingEvents() {
                                     )}
                                 />
                             </div>
+
+                            <div className="space-y-4 border-t pt-4">
+                                <FormLabel>Survey Questions (Optional)</FormLabel>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <FormField
+                                        control={form.control}
+                                        name="surveyQuestion1"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="font-normal text-muted-foreground">Question 1</FormLabel>
+                                                <FormControl><Textarea placeholder="Enter survey question..." {...field} /></FormControl>
+                                            </FormItem>
+                                        )}
+                                    />
+                                     <FormField
+                                        control={form.control}
+                                        name="surveyQuestion2"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="font-normal text-muted-foreground">Question 2</FormLabel>
+                                                <FormControl><Textarea placeholder="Enter survey question..." {...field} /></FormControl>
+                                            </FormItem>
+                                        )}
+                                    />
+                                     <FormField
+                                        control={form.control}
+                                        name="surveyQuestion3"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="font-normal text-muted-foreground">Question 3</FormLabel>
+                                                <FormControl><Textarea placeholder="Enter survey question..." {...field} /></FormControl>
+                                            </FormItem>
+                                        )}
+                                    />
+                                     <FormField
+                                        control={form.control}
+                                        name="surveyQuestion4"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="font-normal text-muted-foreground">Question 4</FormLabel>
+                                                <FormControl><Textarea placeholder="Enter survey question..." {...field} /></FormControl>
+                                            </FormItem>
+                                        )}
+                                    />
+                                     <FormField
+                                        control={form.control}
+                                        name="surveyQuestion5"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="font-normal text-muted-foreground">Question 5</FormLabel>
+                                                <FormControl><Textarea placeholder="Enter survey question..." {...field} /></FormControl>
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                            </div>
+                            
                             <DialogFooter>
                                 <Button type="button" variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
                                 <Button type="submit">{editingEvent ? 'Save Changes' : 'Create Event'}</Button>
