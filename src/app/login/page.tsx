@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import AppLogo from '@/components/app-logo';
 import { users } from '@/lib/data';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { cn } from '@/lib/utils';
 
 export default function LoginPage() {
   const [email, setEmail] = React.useState('');
@@ -63,8 +64,8 @@ export default function LoginPage() {
                 </SelectTrigger>
                 <SelectContent>
                   {users.map((user) => (
-                    <SelectItem key={user.id} value={user.email}>
-                      {user.name} ({user.role})
+                    <SelectItem key={user.id} value={user.email} className="truncate">
+                      <span className="truncate">{user.name} ({user.role})</span>
                     </SelectItem>
                   ))}
                 </SelectContent>
