@@ -27,8 +27,17 @@ export default function SupervisorPage() {
             && event.status === 'Active'
         ), [currentUser.department]);
         
+    const nominatedForActiveEventIds = useMemo(() => {
+        if (!activeEvent) return [];
+        return nominations
+            .filter(n => n.eventId === activeEvent.id)
+            .map(n => n.collaboratorId);
+    }, [nominations, activeEvent]);
+
     const teamMembers = users.filter(user => 
-        user.department === currentUser.department && user.role === 'Collaborator'
+        user.department === currentUser.department 
+        && user.role === 'Collaborator'
+        && !nominatedForActiveEventIds.includes(user.id) // Exclude already nominated
     );
 
     const filteredTeamMembers = teamMembers.filter(member => 
@@ -156,7 +165,7 @@ export default function SupervisorPage() {
                              {filteredTeamMembers.length === 0 && (
                                 <TableRow>
                                     <TableCell colSpan={2} className="text-center text-muted-foreground py-8">
-                                        No collaborators found.
+                                        {teamMembers.length > 0 ? "No collaborators found matching your search." : "All collaborators have been nominated."}
                                     </TableCell>
                                 </TableRow>
                             )}
