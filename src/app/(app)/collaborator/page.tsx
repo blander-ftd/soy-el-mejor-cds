@@ -32,17 +32,17 @@ export default function CollaboratorPage() {
 
   const submitVote = () => {
     toast({
-        title: "Vote Submitted!",
-        description: `Thank you for participating. Your vote for ${selected.length} candidate(s) has been recorded.`,
+        title: "¡Voto Enviado!",
+        description: `Gracias por participar. Tu voto por ${selected.length} candidato(s) ha sido registrado.`,
     });
     setSelected([]);
   }
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold tracking-tight">Cast Your Vote</h1>
+      <h1 className="text-3xl font-bold tracking-tight">Emite tu Voto</h1>
       <p className="text-muted-foreground">
-        Select up to 3 colleagues from your department who you believe deserve to be 'Soy El Mejor'.
+        Selecciona hasta 3 colegas de tu departamento que crees que merecen ser 'Soy El Mejor'.
       </p>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -71,7 +71,7 @@ export default function CollaboratorPage() {
                   htmlFor={`vote-${nominee.id}`}
                   className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                 >
-                  Vote for {nominee.name.split(' ')[0]}
+                  Votar por {nominee.name.split(' ')[0]}
                 </label>
               </div>
             </CardFooter>
@@ -81,7 +81,7 @@ export default function CollaboratorPage() {
       
       <div className="flex justify-end mt-6">
         <Button size="lg" disabled={selected.length === 0} onClick={submitVote}>
-          Submit My {selected.length} Vote(s)
+          Enviar mis {selected.length} Voto(s)
         </Button>
       </div>
     </div>

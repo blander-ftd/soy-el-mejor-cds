@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 export default function LiveClock() {
   const [time, setTime] = useState<Date | null>(null);
@@ -25,7 +26,7 @@ export default function LiveClock() {
 
   return (
     <div className="text-sm text-primary-foreground font-medium hidden md:block">
-      {format(time, 'PPP p')}
+      {format(time, 'PPP p', { locale: es })}
     </div>
   );
 }

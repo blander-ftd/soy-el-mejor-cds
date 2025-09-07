@@ -59,8 +59,8 @@ export default function SurveyPage() {
   const handleSubmit = (nomineeId: string) => {
     const nominee = users.find(u => u.id === nomineeId);
     toast({
-        title: "Evaluation Submitted!",
-        description: `Your evaluation for ${nominee?.name} has been recorded.`,
+        title: "¡Evaluación Enviada!",
+        description: `Tu evaluación para ${nominee?.name} ha sido registrada.`,
         action: <CheckCircle className="text-green-500" />
     });
   };
@@ -71,9 +71,9 @@ export default function SurveyPage() {
              <Card className="w-full max-w-lg text-center">
                 <CardContent className="flex flex-col items-center justify-center gap-4 py-16">
                     <CalendarOff className="h-16 w-16 text-muted-foreground" />
-                    <h3 className="text-xl font-semibold">No Active Survey Period</h3>
+                    <h3 className="text-xl font-semibold">No Hay Período de Encuesta Activo</h3>
                     <p className="max-w-md text-muted-foreground">
-                        There are no active events requiring a survey at the moment.
+                        No hay eventos activos que requieran una encuesta en este momento.
                     </p>
                 </CardContent>
             </Card>
@@ -87,9 +87,9 @@ export default function SurveyPage() {
              <Card className="w-full max-w-lg text-center">
                 <CardContent className="flex flex-col items-center justify-center gap-4 py-16">
                     <UserX className="h-16 w-16 text-muted-foreground" />
-                    <h3 className="text-xl font-semibold">No Nominees to Evaluate</h3>
+                    <h3 className="text-xl font-semibold">No Hay Nominados para Evaluar</h3>
                     <p className="max-w-md text-muted-foreground">
-                        There are currently no nominated collaborators to evaluate for the {activeEvent.month} event.
+                        Actualmente no hay colaboradores nominados para evaluar en el evento de {activeEvent.month}.
                     </p>
                 </CardContent>
             </Card>
@@ -100,10 +100,10 @@ export default function SurveyPage() {
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">Peer Evaluation Survey</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Encuesta de Evaluación de Pares</h1>
         <p className="text-muted-foreground">
-            Evaluate your nominated colleagues for the {activeEvent.month} event. 
-            Your feedback is crucial for selecting the winner.
+            Evalúa a tus colegas nominados para el evento de {activeEvent.month}. 
+            Tus comentarios son cruciales para seleccionar al ganador.
         </p>
       </div>
 
@@ -117,7 +117,7 @@ export default function SurveyPage() {
                         <AvatarImage src={nominee.avatar} />
                         <AvatarFallback>{nominee.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
                     </Avatar>
-                    <CardTitle className="text-2xl">Evaluating: {nominee.name}</CardTitle>
+                    <CardTitle className="text-2xl">Evaluando a: {nominee.name}</CardTitle>
                     <CardDescription>{nominee.department}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-8 pt-4">
@@ -144,10 +144,10 @@ export default function SurveyPage() {
                 </CardContent>
                 <CardFooter className="flex-col gap-4">
                     <Button onClick={() => handleSubmit(nominee.id)} size="lg" className="w-full">
-                        Submit Evaluation for {nominee.name.split(' ')[0]}
+                        Enviar Evaluación para {nominee.name.split(' ')[0]}
                     </Button>
                      <p className="text-xs text-muted-foreground">
-                        Evaluated {currentSlide + 1} of {nominees.length}
+                        Evaluado {currentSlide + 1} de {nominees.length}
                     </p>
                 </CardFooter>
               </Card>

@@ -41,43 +41,44 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { cn } from "@/lib/utils";
 import { format, addDays } from "date-fns";
+import { es } from 'date-fns/locale';
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
 
 const surveyQuestionSchema = z.object({
-    title: z.string().min(1, "Question title is required."),
-    body: z.string().min(1, "Question body is required."),
+    title: z.string().min(1, "El título de la pregunta es requerido."),
+    body: z.string().min(1, "El cuerpo de la pregunta es requerido."),
 });
 
 const eventFormSchema = z.object({
     id: z.string().optional(),
-    month: z.string().min(1, "Event name is required."),
-    department: z.string().min(1, "Department is required."),
+    month: z.string().min(1, "El nombre del evento es requerido."),
+    department: z.string().min(1, "El departamento es requerido."),
     dateRange: z.object({
-        from: z.date({ required_error: "Event start date is required."}),
-        to: z.date({ required_error: "Event end date is required."}),
+        from: z.date({ required_error: "La fecha de inicio del evento es requerida."}),
+        to: z.date({ required_error: "La fecha de fin del evento es requerida."}),
     }),
-    nominationEndDate: z.date({ required_error: "Nomination end date is required."}),
-    votingEndDate: z.date({ required_error: "Voting end date is required."}),
-    evaluationEndDate: z.date({ required_error: "Evaluation end date is required."}),
-    surveyQuestions: z.array(surveyQuestionSchema).length(5, "You must provide exactly 5 survey questions."),
+    nominationEndDate: z.date({ required_error: "La fecha de fin de nominación es requerida."}),
+    votingEndDate: z.date({ required_error: "La fecha de fin de votación es requerida."}),
+    evaluationEndDate: z.date({ required_error: "La fecha de fin de evaluación es requerida."}),
+    surveyQuestions: z.array(surveyQuestionSchema).length(5, "Debes proporcionar exactamente 5 preguntas de encuesta."),
 }).refine(data => data.dateRange.to > data.dateRange.from, {
-    message: "End date must be after start date.",
+    message: "La fecha de fin debe ser posterior a la fecha de inicio.",
     path: ["dateRange"],
 }).refine(data => data.nominationEndDate >= data.dateRange.from && data.nominationEndDate <= data.dateRange.to, {
-    message: "Must be within the event dates.",
+    message: "Debe estar dentro de las fechas del evento.",
     path: ["nominationEndDate"],
 }).refine(data => data.votingEndDate > data.nominationEndDate, {
-    message: "Must be after nomination phase.",
+    message: "Debe ser posterior a la fase de nominación.",
     path: ["votingEndDate"],
 }).refine(data => data.votingEndDate <= data.dateRange.to, {
-    message: "Must be within the event dates.",
+    message: "Debe estar dentro de las fechas del evento.",
     path: ["votingEndDate"],
 }).refine(data => data.evaluationEndDate > data.votingEndDate, {
-    message: "Must be after voting phase.",
+    message: "Debe ser posterior a la fase de votación.",
     path: ["evaluationEndDate"],
 }).refine(data => data.evaluationEndDate.toDateString() === data.dateRange.to.toDateString(), {
-    message: "Must be the event end date.",
+    message: "Debe ser la fecha de fin del evento.",
     path: ["evaluationEndDate"],
 });
 
@@ -94,11 +95,11 @@ const defaultFormValues: EventFormValues = {
     votingEndDate: addDays(new Date(), 14),
     evaluationEndDate: addDays(new Date(), 20),
     surveyQuestions: [
-        { title: 'Teamwork & Collaboration', body: 'How well does this person collaborate with others toward a common goal?' },
-        { title: 'Innovation & Creativity', body: 'Does this person bring new, creative ideas or improve existing processes?' },
-        { title: 'Leadership & Mentorship', body: 'Does this person demonstrate leadership qualities or actively mentor others?' },
-        { title: 'Problem Solving & Resilience', body: 'How effective is this person at overcoming challenges and finding solutions?' },
-        { title: 'Impact & Contribution', body: 'What has been this person\'s most significant contribution or impact this month?' }
+        { title: 'Trabajo en Equipo y Colaboración', body: '¿Qué tan bien colabora esta persona con otros hacia un objetivo común?' },
+        { title: 'Innovación y Creatividad', body: '¿Aporta esta persona ideas nuevas y creativas o mejora los procesos existentes?' },
+        { title: 'Liderazgo y Mentoría', body: '¿Demuestra esta persona cualidades de liderazgo o mentorea activamente a otros?' },
+        { title: 'Resolución de Problemas y Resiliencia', body: '¿Cuán efectiva es esta persona para superar desafíos y encontrar soluciones?' },
+        { title: 'Impacto y Contribución', body: '¿Cuál ha sido la contribución o impacto más significativo de esta persona este mes?' }
     ],
 }
 
@@ -146,7 +147,7 @@ export function VotingEvents() {
             department: data.department,
             startDate: data.dateRange.from,
             endDate: data.dateRange.to,
-            status: editingEvent?.status || "Pending",
+            status: editingEvent?.status || "Pendiente",
             surveyQuestions: data.surveyQuestions,
         };
 
@@ -157,8 +158,8 @@ export function VotingEvents() {
         );
 
         toast({
-            title: isEditing ? "Event Updated!" : "Event Created!",
-            description: `The event "${data.month}" for ${data.department} has been ${isEditing ? 'updated' : 'scheduled'}.`,
+            title: isEditing ? "¡Evento Actualizado!" : "¡Evento Creado!",
+            description: `El evento "${data.month}" para ${data.department} ha sido ${isEditing ? 'actualizado' : 'programado'}.`,
         });
         setOpen(false);
     }
@@ -182,14 +183,14 @@ export function VotingEvents() {
                 <DialogTrigger asChild>
                     <Button onClick={handleCreate}>
                         <PlusCircle className="mr-2 h-4 w-4" />
-                        Create Event
+                        Crear Evento
                     </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-3xl max-h-[90vh] flex flex-col">
                     <DialogHeader className="flex-shrink-0">
-                        <DialogTitle>{editingEvent ? 'Edit' : 'Create New'} Voting Event</DialogTitle>
+                        <DialogTitle>{editingEvent ? 'Editar' : 'Crear Nuevo'} Evento de Votación</DialogTitle>
                         <DialogDescription>
-                           {editingEvent ? 'Update the event details below.' : 'Define the parameters and timeline for the new voting event.'}
+                           {editingEvent ? 'Actualiza los detalles del evento a continuación.' : 'Define los parámetros y el cronograma para el nuevo evento de votación.'}
                         </DialogDescription>
                     </DialogHeader>
                     <div className="flex-grow overflow-y-auto pr-6 -mr-6">
@@ -201,9 +202,9 @@ export function VotingEvents() {
                                         name="month"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Event Name</FormLabel>
+                                                <FormLabel>Nombre del Evento</FormLabel>
                                                 <FormControl>
-                                                    <Input placeholder="e.g., August 2024" {...field} />
+                                                    <Input placeholder="ej., Agosto 2024" {...field} />
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>
@@ -214,15 +215,15 @@ export function VotingEvents() {
                                         name="department"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Department</FormLabel>
+                                                <FormLabel>Departamento</FormLabel>
                                                 <Select onValueChange={field.onChange} value={field.value}>
                                                     <FormControl>
                                                         <SelectTrigger>
-                                                            <SelectValue placeholder="Select a department" />
+                                                            <SelectValue placeholder="Selecciona un departamento" />
                                                         </SelectTrigger>
                                                     </FormControl>
                                                     <SelectContent>
-                                                        <SelectItem value="All Departments">All Departments</SelectItem>
+                                                        <SelectItem value="All Departments">Todos los Departamentos</SelectItem>
                                                         {departments.map(dep => (
                                                             <SelectItem key={dep} value={dep}>{dep}</SelectItem>
                                                         ))}
@@ -239,7 +240,7 @@ export function VotingEvents() {
                                     name="dateRange"
                                     render={({ field }) => (
                                         <FormItem className="flex flex-col">
-                                            <FormLabel>Event Duration</FormLabel>
+                                            <FormLabel>Duración del Evento</FormLabel>
                                             <Popover>
                                                 <PopoverTrigger asChild>
                                                     <FormControl>
@@ -255,14 +256,14 @@ export function VotingEvents() {
                                                         {field.value?.from ? (
                                                         field.value.to ? (
                                                             <>
-                                                            {format(field.value.from, "LLL dd, y")} -{" "}
-                                                            {format(field.value.to, "LLL dd, y")}
+                                                            {format(field.value.from, "LLL dd, y", { locale: es })} -{" "}
+                                                            {format(field.value.to, "LLL dd, y", { locale: es })}
                                                             </>
                                                         ) : (
-                                                            format(field.value.from, "LLL dd, y")
+                                                            format(field.value.from, "LLL dd, y", { locale: es })
                                                         )
                                                         ) : (
-                                                        <span>Pick a date range</span>
+                                                        <span>Elige un rango de fechas</span>
                                                         )}
                                                     </Button>
                                                     </FormControl>
@@ -275,6 +276,7 @@ export function VotingEvents() {
                                                         selected={field.value}
                                                         onSelect={field.onChange}
                                                         numberOfMonths={2}
+                                                        locale={es}
                                                     />
                                                 </PopoverContent>
                                             </Popover>
@@ -289,7 +291,7 @@ export function VotingEvents() {
                                         name="nominationEndDate"
                                         render={({ field }) => (
                                             <FormItem className="flex flex-col">
-                                            <FormLabel>1. Nomination Phase End</FormLabel>
+                                            <FormLabel>1. Fin Fase de Nominación</FormLabel>
                                             <Popover>
                                                 <PopoverTrigger asChild>
                                                 <FormControl>
@@ -301,7 +303,7 @@ export function VotingEvents() {
                                                     )}
                                                     >
                                                     <CalendarIcon className="mr-2 h-4 w-4" />
-                                                    {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                                                    {field.value ? format(field.value, "PPP", { locale: es }) : <span>Elige una fecha</span>}
                                                     </Button>
                                                 </FormControl>
                                                 </PopoverTrigger>
@@ -312,6 +314,7 @@ export function VotingEvents() {
                                                     onSelect={field.onChange}
                                                     disabled={(date) => !form.getValues().dateRange.from || !form.getValues().dateRange.to || date < form.getValues().dateRange.from || date > form.getValues().dateRange.to}
                                                     initialFocus
+                                                    locale={es}
                                                 />
                                                 </PopoverContent>
                                             </Popover>
@@ -324,7 +327,7 @@ export function VotingEvents() {
                                         name="votingEndDate"
                                         render={({ field }) => (
                                             <FormItem className="flex flex-col">
-                                            <FormLabel>2. Voting Phase End</FormLabel>
+                                            <FormLabel>2. Fin Fase de Votación</FormLabel>
                                             <Popover>
                                                 <PopoverTrigger asChild>
                                                 <FormControl>
@@ -336,7 +339,7 @@ export function VotingEvents() {
                                                     )}
                                                     >
                                                     <CalendarIcon className="mr-2 h-4 w-4" />
-                                                    {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                                                    {field.value ? format(field.value, "PPP", { locale: es }) : <span>Elige una fecha</span>}
                                                     </Button>
                                                 </FormControl>
                                                 </PopoverTrigger>
@@ -347,6 +350,7 @@ export function VotingEvents() {
                                                     onSelect={field.onChange}
                                                     disabled={(date) => !form.getValues().nominationEndDate || !form.getValues().dateRange.to || date < form.getValues().nominationEndDate || date > form.getValues().dateRange.to}
                                                     initialFocus
+                                                    locale={es}
                                                 />
                                                 </PopoverContent>
                                             </Popover>
@@ -359,7 +363,7 @@ export function VotingEvents() {
                                         name="evaluationEndDate"
                                         render={({ field }) => (
                                             <FormItem className="flex flex-col">
-                                            <FormLabel>3. Evaluation Phase End</FormLabel>
+                                            <FormLabel>3. Fin Fase de Evaluación</FormLabel>
                                             <Popover>
                                                 <PopoverTrigger asChild>
                                                 <FormControl>
@@ -371,7 +375,7 @@ export function VotingEvents() {
                                                     )}
                                                     >
                                                     <CalendarIcon className="mr-2 h-4 w-4" />
-                                                    {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                                                    {field.value ? format(field.value, "PPP", { locale: es }) : <span>Elige una fecha</span>}
                                                     </Button>
                                                 </FormControl>
                                                 </PopoverTrigger>
@@ -382,6 +386,7 @@ export function VotingEvents() {
                                                     onSelect={field.onChange}
                                                     disabled={(date) => !form.getValues().votingEndDate || !form.getValues().dateRange.to || date < form.getValues().votingEndDate || date > form.getValues().dateRange.to}
                                                     initialFocus
+                                                    locale={es}
                                                 />
                                                 </PopoverContent>
                                             </Popover>
@@ -392,19 +397,19 @@ export function VotingEvents() {
                                 </div>
 
                                 <div className="space-y-6 border-t pt-4">
-                                    <FormLabel>Survey Questions</FormLabel>
-                                    <FormDescription>Define the 5 questions for the peer evaluation survey.</FormDescription>
+                                    <FormLabel>Preguntas de la Encuesta</FormLabel>
+                                    <FormDescription>Define las 5 preguntas para la encuesta de evaluación de pares.</FormDescription>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-6">
                                         {[...Array(5)].map((_, index) => (
                                             <div key={index} className="space-y-2 rounded-lg border p-4">
-                                                 <FormLabel className="text-sm">Question {index + 1}</FormLabel>
+                                                 <FormLabel className="text-sm">Pregunta {index + 1}</FormLabel>
                                                  <FormField
                                                     control={form.control}
                                                     name={`surveyQuestions.${index}.title`}
                                                     render={({ field }) => (
                                                         <FormItem>
-                                                            <FormLabel className="font-normal text-muted-foreground text-xs">Title</FormLabel>
-                                                            <FormControl><Input placeholder="e.g., Teamwork & Collaboration" {...field} /></FormControl>
+                                                            <FormLabel className="font-normal text-muted-foreground text-xs">Título</FormLabel>
+                                                            <FormControl><Input placeholder="ej., Trabajo en Equipo" {...field} /></FormControl>
                                                             <FormMessage />
                                                         </FormItem>
                                                     )}
@@ -414,8 +419,8 @@ export function VotingEvents() {
                                                     name={`surveyQuestions.${index}.body`}
                                                     render={({ field }) => (
                                                         <FormItem>
-                                                             <FormLabel className="font-normal text-muted-foreground text-xs">Question Body</FormLabel>
-                                                            <FormControl><Textarea placeholder="Enter the full question for the survey..." {...field} /></FormControl>
+                                                             <FormLabel className="font-normal text-muted-foreground text-xs">Cuerpo de la Pregunta</FormLabel>
+                                                            <FormControl><Textarea placeholder="Introduce la pregunta completa para la encuesta..." {...field} /></FormControl>
                                                              <FormMessage />
                                                         </FormItem>
                                                     )}
@@ -427,8 +432,8 @@ export function VotingEvents() {
                                 </div>
                                 
                                 <DialogFooter className="flex-shrink-0 pt-4 border-t">
-                                    <Button type="button" variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
-                                    <Button type="submit">{editingEvent ? 'Save Changes' : 'Create Event'}</Button>
+                                    <Button type="button" variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button>
+                                    <Button type="submit">{editingEvent ? 'Guardar Cambios' : 'Crear Evento'}</Button>
                                 </DialogFooter>
                             </form>
                         </Form>
@@ -439,11 +444,11 @@ export function VotingEvents() {
         <Table>
         <TableHeader>
             <TableRow>
-            <TableHead>Month</TableHead>
-            <TableHead>Department</TableHead>
-            <TableHead>Status</TableHead>
+            <TableHead>Mes</TableHead>
+            <TableHead>Departamento</TableHead>
+            <TableHead>Estado</TableHead>
             <TableHead>
-                <span className="sr-only">Actions</span>
+                <span className="sr-only">Acciones</span>
             </TableHead>
             </TableRow>
         </TableHeader>
@@ -451,7 +456,7 @@ export function VotingEvents() {
             {votingEvents.map((event) => (
             <TableRow key={event.id}>
                 <TableCell className="font-medium">{event.month}</TableCell>
-                <TableCell>{event.department ?? 'All Departments'}</TableCell>
+                <TableCell>{event.department ?? 'Todos los Departamentos'}</TableCell>
                 <TableCell>
                 <Badge
                     className={cn({
@@ -459,19 +464,19 @@ export function VotingEvents() {
                         "bg-yellow-500/20 text-yellow-700 hover:bg-yellow-500/30 dark:bg-yellow-500/10 dark:text-yellow-400": event.status === 'Pending',
                         "bg-red-500/20 text-red-700 hover:bg-red-500/30 dark:bg-red-500/10 dark:text-red-400": event.status === 'Closed',
                     })}
-                >{event.status}</Badge>
+                >{event.status === 'Active' ? 'Activo' : event.status === 'Pending' ? 'Pendiente' : 'Cerrado'}</Badge>
                 </TableCell>
                 <TableCell>
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                     <Button aria-haspopup="true" size="icon" variant="ghost">
                         <MoreHorizontal className="h-4 w-4" />
-                        <span className="sr-only">Toggle menu</span>
+                        <span className="sr-only">Menú</span>
                     </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                    <DropdownMenuItem onSelect={() => handleEdit(event)}><Pencil className="mr-2 h-4 w-4"/>Edit Event</DropdownMenuItem>
+                    <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                    <DropdownMenuItem onSelect={() => handleEdit(event)}><Pencil className="mr-2 h-4 w-4"/>Editar Evento</DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
                 </TableCell>
@@ -480,9 +485,9 @@ export function VotingEvents() {
         </TableBody>
         </Table>
         <div className="space-y-2 pt-4 border-t">
-            <Label htmlFor="message" className="font-semibold">Engaging Message for Winner Announcement</Label>
-            <Textarea id="message" placeholder="Type a fun, engaging message to show with the results..." />
-            <Button>Save Message</Button>
+            <Label htmlFor="message" className="font-semibold">Mensaje Atractivo para el Anuncio del Ganador</Label>
+            <Textarea id="message" placeholder="Escribe un mensaje divertido y atractivo para mostrar con los resultados..." />
+            <Button>Guardar Mensaje</Button>
         </div>
     </div>
   );

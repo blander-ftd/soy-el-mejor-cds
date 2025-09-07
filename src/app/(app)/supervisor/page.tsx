@@ -45,9 +45,9 @@ export default function SupervisorPage() {
             const event = votingEvents.find(e => e.id === nom.eventId);
             return {
                 ...nom,
-                collaboratorName: collaborator?.name ?? 'Unknown',
+                collaboratorName: collaborator?.name ?? 'Desconocido',
                 collaboratorAvatar: collaborator?.avatar ?? '',
-                eventName: event?.month ?? 'Unknown Event',
+                eventName: event?.month ?? 'Evento Desconocido',
                 eventIsActive: event?.status === 'Active'
             }
         })
@@ -67,17 +67,18 @@ export default function SupervisorPage() {
 
     const filteredAndAvailableTeamMembers = useMemo(() => 
         teamMembers.filter(member => 
+            !myNominations.some(n => n.collaboratorId === member.id && n.eventId === activeEvent?.id) &&
             !nominatedForActiveEventIds.includes(member.id) &&
             member.name.toLowerCase().includes(searchTerm.toLowerCase())
-        ), [teamMembers, nominatedForActiveEventIds, searchTerm]);
+        ), [teamMembers, myNominations, activeEvent, nominatedForActiveEventIds, searchTerm]);
     
     
     const handleNominate = (collaborator: User) => {
         if (!activeEvent) {
              toast({
                 variant: "destructive",
-                title: "Nomination Failed",
-                description: "There is no active nomination period.",
+                title: "Nominación Fallida",
+                description: "No hay un período de nominación activo.",
             });
             return;
         }
@@ -85,8 +86,8 @@ export default function SupervisorPage() {
         if (myNominationsForActiveEvent.length >= nominationLimit) {
             toast({
                 variant: "destructive",
-                title: "Nomination Limit Reached",
-                description: `You can only nominate up to ${nominationLimit} collaborator(s) for this event.`,
+                title: "Límite de Nominaciones Alcanzado",
+                description: `Solo puedes nominar hasta ${nominationLimit} colaborador(es) para este evento.`,
             });
             return;
         }
@@ -95,8 +96,8 @@ export default function SupervisorPage() {
         if (isAlreadyNominated) {
              toast({
                 variant: "destructive",
-                title: "Already Nominated",
-                description: `${collaborator.name} has already been nominated for this event.`,
+                title: "Ya Nominado",
+                description: `${collaborator.name} ya ha sido nominado para este evento.`,
             });
             return;
         }
@@ -111,48 +112,48 @@ export default function SupervisorPage() {
 
         setNominations(prev => [...prev, newNomination]);
         toast({
-            title: "Nomination Sent!",
-            description: `${collaborator.name} has been nominated for ${activeEvent.month}.`,
+            title: "¡Nominación Enviada!",
+            description: `${collaborator.name} ha sido nominado para ${activeEvent.month}.`,
         });
     }
 
     const handleRemoveNomination = (nominationId: string) => {
         setNominations(prev => prev.filter(n => n.id !== nominationId));
         toast({
-            title: "Nomination Retracted",
-            description: "The nomination has been successfully removed.",
+            title: "Nominación Retirada",
+            description: "La nominación ha sido eliminada exitosamente.",
         });
     }
 
   return (
     <div className="space-y-6">
         <div className="space-y-2">
-            <h1 className="text-3xl font-bold tracking-tight">Nomination Center: {currentUser.department}</h1>
-            <p className="text-muted-foreground">Nominate outstanding collaborators from your department for the "Soy El Mejor" award.</p>
+            <h1 className="text-3xl font-bold tracking-tight">Centro de Nominaciones: {currentUser.department}</h1>
+            <p className="text-muted-foreground">Nomina a colaboradores destacados de tu departamento para el premio "Soy El Mejor".</p>
         </div>
 
         {!activeEvent ? (
             <Card>
                 <CardContent className="flex flex-col items-center justify-center gap-4 py-16 text-center">
                     <CalendarOff className="h-16 w-16 text-muted-foreground" />
-                    <h3 className="text-xl font-semibold">No Active Nomination Period</h3>
+                    <h3 className="text-xl font-semibold">No Hay Período de Nominación Activo</h3>
                     <p className="max-w-md text-muted-foreground">
-                        There are no active voting events for your department at the moment. Please check back later.
+                        No hay eventos de votación activos para tu departamento en este momento. Por favor, vuelve más tarde.
                     </p>
                 </CardContent>
             </Card>
         ) : (
              <Card>
                 <CardHeader>
-                    <CardTitle>Nominate for {activeEvent.month}</CardTitle>
+                    <CardTitle>Nominar para {activeEvent.month}</CardTitle>
                     <CardDescription>
-                        Select a collaborator to nominate. You can nominate up to {nominationLimit} collaborator(s). 
-                        ({myNominationsForActiveEvent.length}/{nominationLimit} nominated)
+                        Selecciona un colaborador para nominar. Puedes nominar hasta {nominationLimit} colaborador(es). 
+                        ({myNominationsForActiveEvent.length}/{nominationLimit} nominados)
                     </CardDescription>
                     <div className="relative pt-2">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input 
-                            placeholder="Search by name..." 
+                            placeholder="Buscar por nombre..." 
                             className="pl-9"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
@@ -163,8 +164,8 @@ export default function SupervisorPage() {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Collaborator</TableHead>
-                                <TableHead className="text-right">Action</TableHead>
+                                <TableHead>Colaborador</TableHead>
+                                <TableHead className="text-right">Acción</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -186,7 +187,7 @@ export default function SupervisorPage() {
                                             disabled={myNominationsForActiveEvent.length >= nominationLimit}
                                         >
                                             <Award className="mr-2 h-4 w-4" />
-                                            Nominate
+                                            Nominar
                                         </Button>
                                     </TableCell>
                                 </TableRow>
@@ -194,7 +195,7 @@ export default function SupervisorPage() {
                              {filteredAndAvailableTeamMembers.length === 0 && (
                                 <TableRow>
                                     <TableCell colSpan={2} className="text-center text-muted-foreground py-8">
-                                        {teamMembers.length > 0 ? "No collaborators found matching your search." : "All eligible collaborators have been nominated."}
+                                        {teamMembers.length > 0 ? "No se encontraron colaboradores que coincidan con tu búsqueda." : "Todos los colaboradores elegibles han sido nominados."}
                                     </TableCell>
                                 </TableRow>
                             )}
@@ -206,8 +207,8 @@ export default function SupervisorPage() {
       
         <Card>
             <CardHeader>
-                <CardTitle className="flex items-center gap-2"><UserCheck /> Current Nominations</CardTitle>
-                <CardDescription>A list of all collaborators you have nominated.</CardDescription>
+                <CardTitle className="flex items-center gap-2"><UserCheck /> Nominaciones Actuales</CardTitle>
+                <CardDescription>Una lista de todos los colaboradores que has nominado.</CardDescription>
             </CardHeader>
             <CardContent>
                 <div className="space-y-4">
@@ -221,7 +222,7 @@ export default function SupervisorPage() {
                                  <div>
                                      <p className="font-medium">{nom.collaboratorName}</p>
                                      <p className="text-xs text-muted-foreground">
-                                        Nominated for <span className="font-semibold">{nom.eventName}</span> on {new Date(nom.nominationDate).toLocaleDateString()}
+                                        Nominado para <span className="font-semibold">{nom.eventName}</span> el {new Date(nom.nominationDate).toLocaleDateString()}
                                      </p>
                                  </div>
                              </div>
@@ -230,15 +231,15 @@ export default function SupervisorPage() {
                                 variant="outline" 
                                 disabled={!nom.eventIsActive}
                                 onClick={() => handleRemoveNomination(nom.id)}
-                                aria-label="Remove nomination"
+                                aria-label="Eliminar nominación"
                             >
                                 <Trash2 className="mr-2 h-4 w-4" />
-                                Remove
+                                Eliminar
                              </Button>
                          </div>
                     ))}
                     {myNominations.length === 0 && (
-                        <p className="text-center text-muted-foreground py-8">You haven't made any nominations yet.</p>
+                        <p className="text-center text-muted-foreground py-8">Aún no has hecho ninguna nominación.</p>
                     )}
                 </div>
             </CardContent>

@@ -10,19 +10,19 @@ import { PlusCircle } from "lucide-react";
 export default function AdminPage() {
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
+      <h1 className="text-3xl font-bold tracking-tight">Panel de Administración</h1>
 
       <Tabs defaultValue="events">
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="events"><Vote className="mr-2 h-4 w-4"/>Voting Events</TabsTrigger>
-          <TabsTrigger value="users"><Users className="mr-2 h-4 w-4"/>User Management</TabsTrigger>
-          <TabsTrigger value="audit"><Activity className="mr-2 h-4 w-4"/>Audit Log</TabsTrigger>
+          <TabsTrigger value="events"><Vote className="mr-2 h-4 w-4"/>Eventos de Votación</TabsTrigger>
+          <TabsTrigger value="users"><Users className="mr-2 h-4 w-4"/>Gestión de Usuarios</TabsTrigger>
+          <TabsTrigger value="audit"><Activity className="mr-2 h-4 w-4"/>Registro de Auditoría</TabsTrigger>
         </TabsList>
         <TabsContent value="events">
             <Card>
                 <CardHeader>
-                    <CardTitle>Manage Voting Events</CardTitle>
-                    <CardDescription>Start, edit, and end voting events.</CardDescription>
+                    <CardTitle>Gestionar Eventos de Votación</CardTitle>
+                    <CardDescription>Iniciar, editar y finalizar eventos de votación.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <VotingEvents />
@@ -32,8 +32,8 @@ export default function AdminPage() {
         <TabsContent value="users">
             <Card>
                 <CardHeader>
-                    <CardTitle>Manage Users</CardTitle>
-                    <CardDescription>View, add, and manage user accounts in the system.</CardDescription>
+                    <CardTitle>Gestionar Usuarios</CardTitle>
+                    <CardDescription>Ver, agregar y administrar cuentas de usuario en el sistema.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <UserManagement />
@@ -43,8 +43,8 @@ export default function AdminPage() {
         <TabsContent value="audit">
             <Card>
                 <CardHeader>
-                    <CardTitle>Audit Log</CardTitle>
-                    <CardDescription>Track all significant actions performed within the application.</CardDescription>
+                    <CardTitle>Registro de Auditoría</CardTitle>
+                    <CardDescription>Rastrear todas las acciones significativas realizadas dentro de la aplicación.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <AuditLog />

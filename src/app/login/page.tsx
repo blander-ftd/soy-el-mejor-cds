@@ -28,15 +28,15 @@ export default function LoginPage() {
       const success = login(email);
       if (success) {
         toast({
-          title: 'Login Successful',
-          description: 'Welcome back!',
+          title: 'Inicio de Sesión Exitoso',
+          description: '¡Bienvenido de vuelta!',
         });
         router.push('/');
       } else {
         toast({
           variant: 'destructive',
-          title: 'Login Failed',
-          description: 'Invalid email or password. Please try again.',
+          title: 'Inicio de Sesión Fallido',
+          description: 'Correo electrónico o contraseña no válidos. Por favor, inténtalo de nuevo.',
         });
         setIsLoading(false);
       }
@@ -51,15 +51,15 @@ export default function LoginPage() {
             <AppLogo />
           </div>
           <CardTitle className="text-2xl">Soy El Mejor</CardTitle>
-          <CardDescription>Sign in to cast your vote</CardDescription>
+          <CardDescription>Inicia sesión para emitir tu voto</CardDescription>
         </CardHeader>
         <form onSubmit={handleLogin}>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Select User (for demo)</Label>
+              <Label htmlFor="email">Seleccionar Usuario (para demostración)</Label>
               <Select value={email} onValueChange={setEmail} required>
                 <SelectTrigger id="email">
-                  <SelectValue placeholder="Select a user to sign in as" />
+                  <SelectValue placeholder="Selecciona un usuario para iniciar sesión" />
                 </SelectTrigger>
                 <SelectContent>
                   {users.map((user) => (
@@ -73,7 +73,7 @@ export default function LoginPage() {
           </CardContent>
           <CardFooter>
             <Button type="submit" className="w-full" disabled={isLoading || !email}>
-              {isLoading ? 'Signing In...' : 'Sign In'}
+              {isLoading ? 'Iniciando Sesión...' : 'Iniciar Sesión'}
             </Button>
           </CardFooter>
         </form>

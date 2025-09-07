@@ -3,7 +3,7 @@ import type { User, Department, Role, VotingEvent, Nomination, Vote, AuditLog } 
 export const departments: Department[] = ["Technology", "Marketing", "Sales", "Human Resources"];
 
 export const users: User[] = [
-  { id: 'user-1', name: 'Admin User', email: 'admin@example.com', role: 'Admin', department: 'Technology', avatar: 'https://picsum.photos/id/1/100' },
+  { id: 'user-1', name: 'Usuario Admin', email: 'admin@example.com', role: 'Admin', department: 'Technology', avatar: 'https://picsum.photos/id/1/100' },
   { id: 'user-2', name: 'Sofia Davis', email: 'supervisor.tech@example.com', role: 'Supervisor', department: 'Technology', avatar: 'https://picsum.photos/id/2/100' },
   { id: 'user-3', name: 'Alex Johnson', email: 'collaborator.tech@example.com', role: 'Collaborator', department: 'Technology', avatar: 'https://picsum.photos/id/3/100' },
   { id: 'user-4', name: 'Maria Garcia', email: 'coordinator.tech@example.com', role: 'Coordinator', department: 'Technology', avatar: 'https://picsum.photos/id/4/100' },
@@ -14,26 +14,28 @@ export const users: User[] = [
   { id: 'user-9', name: 'Casey Jones', email: 'collaborator.tech.4@example.com', role: 'Collaborator', department: 'Technology', avatar: 'https://picsum.photos/id/9/100' },
   { id: 'user-10', name: 'Jordan Taylor', email: 'collaborator.tech.5@example.com', role: 'Collaborator', department: 'Technology', avatar: 'https://picsum.photos/id/10/100' },
   { id: 'user-11', name: 'Morgan Lee', email: 'collaborator.tech.6@example.com', role: 'Collaborator', department: 'Technology', avatar: 'https://picsum.photos/id/11/100' },
+  { id: 'user-12', name: 'Taylor Swift', email: 'collaborator.tech.7@example.com', role: 'Collaborator', department: 'Technology', avatar: 'https://picsum.photos/id/12/100' },
 ];
 
 const defaultSurveyQuestions = [
-    { title: 'Teamwork', body: 'How well does this person collaborate with others?' },
-    { title: 'Innovation', body: 'Does this person bring new and creative ideas to the table?' },
-    { title: 'Leadership', body: 'Does this person demonstrate leadership qualities, even without a formal title?' },
-    { title: 'Problem Solving', body: 'How effective is this person at overcoming challenges and finding solutions?' },
-    { title: 'Overall Contribution', body: 'What has been this person\'s most significant contribution this month?' }
+    { title: 'Trabajo en Equipo', body: '¿Qué tan bien colabora esta persona con otros?' },
+    { title: 'Innovación', body: '¿Aporta esta persona ideas nuevas y creativas a la mesa?' },
+    { title: 'Liderazgo', body: '¿Demuestra esta persona cualidades de liderazgo, incluso sin un título formal?' },
+    { title: 'Resolución de Problemas', body: '¿Cuán efectiva es esta persona para superar desafíos y encontrar soluciones?' },
+    { title: 'Contribución General', body: '¿Cuál ha sido la contribución más significativa de esta persona este mes?' }
 ];
 
 export const votingEvents: VotingEvent[] = [
-    { id: 'event-1', department: 'Technology', status: 'Active', month: 'July 2024', startDate: new Date('2024-07-01'), endDate: new Date('2024-07-25'), surveyQuestions: defaultSurveyQuestions },
-    { id: 'event-2', department: 'Marketing', status: 'Pending', month: 'July 2024', surveyQuestions: [] },
-    { id: 'event-3', department: 'All Departments', status: 'Closed', month: 'June 2024', startDate: new Date('2024-06-01'), endDate: new Date('2024-06-25'), surveyQuestions: defaultSurveyQuestions },
-    { id: 'event-4', department: 'Human Resources', status: 'Closed', month: 'June 2024', startDate: new Date('2024-06-01'), endDate: new Date('2024-06-25'), surveyQuestions: defaultSurveyQuestions },
+    { id: 'event-1', department: 'Technology', status: 'Active', month: 'Julio 2024', startDate: new Date('2024-07-01'), endDate: new Date('2024-07-25'), surveyQuestions: defaultSurveyQuestions },
+    { id: 'event-2', department: 'Marketing', status: 'Pending', month: 'Julio 2024', surveyQuestions: [] },
+    { id: 'event-3', department: 'All Departments', status: 'Closed', month: 'Junio 2024', startDate: new Date('2024-06-01'), endDate: new Date('2024-06-25'), surveyQuestions: defaultSurveyQuestions },
+    { id: 'event-4', department: 'Human Resources', status: 'Closed', month: 'Junio 2024', startDate: new Date('2024-06-01'), endDate: new Date('2024-06-25'), surveyQuestions: defaultSurveyQuestions },
 ];
 
 export const nominations: Nomination[] = [
     { id: 'nom-1', eventId: 'event-1', collaboratorId: 'user-3', nominatedById: 'user-2', nominationDate: new Date() },
     { id: 'nom-2', eventId: 'event-1', collaboratorId: 'user-7', nominatedById: 'user-2', nominationDate: new Date() },
+    { id: 'nom-3', eventId: 'event-3', collaboratorId: 'user-6', nominatedById: 'user-5', nominationDate: new Date('2024-06-05') },
 ];
 
 export const votes: Vote[] = [
@@ -41,6 +43,6 @@ export const votes: Vote[] = [
 ];
 
 export const auditLogs: AuditLog[] = [
-    { id: 'log-1', userId: 'user-1', action: 'Login', timestamp: new Date(), details: { ip: '192.168.1.1' } },
-    { id: 'log-2', userId: 'user-2', action: 'Nominate Collaborator', timestamp: new Date(), details: { collaboratorId: 'user-3' } },
+    { id: 'log-1', userId: 'user-1', action: 'Inicio de Sesión', timestamp: new Date(), details: { ip: '192.168.1.1' } },
+    { id: 'log-2', userId: 'user-2', action: 'Nominar Colaborador', timestamp: new Date(), details: { collaboratorId: 'user-3' } },
 ];

@@ -41,8 +41,8 @@ import * as XLSX from 'xlsx';
 
 const userFormSchema = z.object({
     id: z.string().optional(),
-    name: z.string().min(1, "Name is required."),
-    email: z.string().email("Invalid email address."),
+    name: z.string().min(1, "El nombre es requerido."),
+    email: z.string().email("Dirección de correo electrónico inválida."),
     role: z.enum(["Admin", "Supervisor", "Coordinator", "Collaborator"]),
     department: z.enum(["Technology", "Marketing", "Sales", "Human Resources"]),
 });
@@ -68,8 +68,8 @@ export function UserManagement() {
         };
         setUsers(prev => [...prev, newUser]);
         toast({
-            title: "User Created!",
-            description: `${data.name} has been added to the system.`,
+            title: "¡Usuario Creado!",
+            description: `${data.name} ha sido agregado al sistema.`,
         });
         setAddUserOpen(false);
         form.reset();
@@ -98,15 +98,15 @@ export function UserManagement() {
                     
                     setUsers(prev => [...prev, ...newUsers]);
                     toast({
-                        title: 'Import Successful',
-                        description: `${newUsers.length} users have been imported.`,
+                        title: 'Importación Exitosa',
+                        description: `${newUsers.length} usuarios han sido importados.`,
                     });
                     setImportOpen(false);
                 } catch (error) {
                      toast({
                         variant: 'destructive',
-                        title: 'Import Failed',
-                        description: 'There was an error parsing the Excel file.',
+                        title: 'Importación Fallida',
+                        description: 'Hubo un error al analizar el archivo de Excel.',
                     });
                 }
             };
@@ -119,46 +119,46 @@ export function UserManagement() {
             <div className="flex justify-end gap-2">
                 <Dialog open={isAddUserOpen} onOpenChange={setAddUserOpen}>
                     <DialogTrigger asChild>
-                        <Button><UserPlus className="mr-2"/> Add User</Button>
+                        <Button><UserPlus className="mr-2"/> Agregar Usuario</Button>
                     </DialogTrigger>
                     <DialogContent>
                         <DialogHeader>
-                            <DialogTitle>Add New User</DialogTitle>
+                            <DialogTitle>Agregar Nuevo Usuario</DialogTitle>
                             <DialogDescription>
-                                Fill out the form to add a new user to the system.
+                                Completa el formulario para agregar un nuevo usuario al sistema.
                             </DialogDescription>
                         </DialogHeader>
                         <form onSubmit={form.handleSubmit(onAddUserSubmit)} className="space-y-4">
                             <div className="space-y-2">
-                                <Label htmlFor="name">Name</Label>
+                                <Label htmlFor="name">Nombre</Label>
                                 <Input id="name" {...form.register("name")} />
                                 {form.formState.errors.name && <p className="text-sm text-destructive">{form.formState.errors.name.message}</p>}
                             </div>
                              <div className="space-y-2">
-                                <Label htmlFor="email">Email</Label>
+                                <Label htmlFor="email">Correo Electrónico</Label>
                                 <Input id="email" type="email" {...form.register("email")} />
                                 {form.formState.errors.email && <p className="text-sm text-destructive">{form.formState.errors.email.message}</p>}
                             </div>
                              <div className="space-y-2">
-                                <Label htmlFor="role">Role</Label>
+                                <Label htmlFor="role">Rol</Label>
                                 <Select onValueChange={(value: Role) => form.setValue('role', value)} defaultValue={form.getValues('role')}>
                                     <SelectTrigger id="role">
-                                        <SelectValue placeholder="Select a role" />
+                                        <SelectValue placeholder="Selecciona un rol" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="Admin">Admin</SelectItem>
                                         <SelectItem value="Supervisor">Supervisor</SelectItem>
-                                        <SelectItem value="Coordinator">Coordinator</SelectItem>
-                                        <SelectItem value="Collaborator">Collaborator</SelectItem>
+                                        <SelectItem value="Coordinator">Coordinador</SelectItem>
+                                        <SelectItem value="Collaborator">Colaborador</SelectItem>
                                     </SelectContent>
                                 </Select>
                                 {form.formState.errors.role && <p className="text-sm text-destructive">{form.formState.errors.role.message}</p>}
                             </div>
                              <div className="space-y-2">
-                                <Label htmlFor="department">Department</Label>
+                                <Label htmlFor="department">Departamento</Label>
                                 <Select onValueChange={(value) => form.setValue('department', value as any)} defaultValue={form.getValues('department')}>
                                     <SelectTrigger id="department">
-                                        <SelectValue placeholder="Select a department" />
+                                        <SelectValue placeholder="Selecciona un departamento" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {departments.map(dep => <SelectItem key={dep} value={dep}>{dep}</SelectItem>)}
@@ -167,8 +167,8 @@ export function UserManagement() {
                                 {form.formState.errors.department && <p className="text-sm text-destructive">{form.formState.errors.department.message}</p>}
                             </div>
                             <DialogFooter>
-                                <Button type="button" variant="ghost" onClick={() => setAddUserOpen(false)}>Cancel</Button>
-                                <Button type="submit">Create User</Button>
+                                <Button type="button" variant="ghost" onClick={() => setAddUserOpen(false)}>Cancelar</Button>
+                                <Button type="submit">Crear Usuario</Button>
                             </DialogFooter>
                         </form>
                     </DialogContent>
@@ -176,20 +176,20 @@ export function UserManagement() {
 
                 <Dialog open={isImportOpen} onOpenChange={setImportOpen}>
                     <DialogTrigger asChild>
-                        <Button variant="outline"><Upload className="mr-2"/> Import from Excel</Button>
+                        <Button variant="outline"><Upload className="mr-2"/> Importar desde Excel</Button>
                     </DialogTrigger>
                     <DialogContent>
                         <DialogHeader>
-                            <DialogTitle>Import Users from Excel</DialogTitle>
+                            <DialogTitle>Importar Usuarios desde Excel</DialogTitle>
                             <DialogDescription>
-                                Upload an Excel file with columns: name, email, role, department.
+                                Sube un archivo de Excel con las columnas: name, email, role, department.
                             </DialogDescription>
                         </DialogHeader>
                         <div className="space-y-4 py-4">
-                            <Label htmlFor="excel-file">Excel File</Label>
+                            <Label htmlFor="excel-file">Archivo Excel</Label>
                             <Input id="excel-file" type="file" accept=".xlsx, .xls" onChange={handleFileChange} />
                             <p className="text-xs text-muted-foreground">
-                                Ensure your file has the correct columns. The roles must be one of: Admin, Supervisor, Coordinator, Collaborator. The departments must match existing ones.
+                                Asegúrate de que tu archivo tenga las columnas correctas. Los roles deben ser uno de: Admin, Supervisor, Coordinator, Collaborator. Los departamentos deben coincidir con los existentes.
                             </p>
                         </div>
                     </DialogContent>
@@ -199,12 +199,12 @@ export function UserManagement() {
                 <Table>
                 <TableHeader>
                     <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Department</TableHead>
-                    <TableHead>Email</TableHead>
+                    <TableHead>Nombre</TableHead>
+                    <TableHead>Rol</TableHead>
+                    <TableHead>Departamento</TableHead>
+                    <TableHead>Correo Electrónico</TableHead>
                     <TableHead>
-                        <span className="sr-only">Actions</span>
+                        <span className="sr-only">Acciones</span>
                     </TableHead>
                     </TableRow>
                 </TableHeader>
@@ -222,13 +222,13 @@ export function UserManagement() {
                             <DropdownMenuTrigger asChild>
                             <Button aria-haspopup="true" size="icon" variant="ghost">
                                 <MoreHorizontal className="h-4 w-4" />
-                                <span className="sr-only">Toggle menu</span>
+                                <span className="sr-only">Menú</span>
                             </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem><Pencil className="mr-2 h-4 w-4"/>Edit</DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive"><Trash2 className="mr-2 h-4 w-4"/>Delete</DropdownMenuItem>
+                            <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                            <DropdownMenuItem><Pencil className="mr-2 h-4 w-4"/>Editar</DropdownMenuItem>
+                            <DropdownMenuItem className="text-destructive"><Trash2 className="mr-2 h-4 w-4"/>Eliminar</DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
                         </TableCell>

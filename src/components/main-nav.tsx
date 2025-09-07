@@ -25,33 +25,33 @@ interface NavLink {
 }
 
 const navLinks: NavLink[] = [
-  { href: '/admin', label: 'Admin Dashboard', icon: ShieldCheck, roles: ['Admin'] },
+  { href: '/admin', label: 'Panel Admin', icon: ShieldCheck, roles: ['Admin'] },
   { 
     href: '/supervisor', 
-    label: 'Nominations', 
+    label: 'Nominaciones', 
     icon: Briefcase, 
     roles: ['Supervisor'],
     disabledCheck: (phases) => !phases.isNominationActive,
-    disabledTooltip: "Nominations are currently closed."
+    disabledTooltip: "Las nominaciones están actualmente cerradas."
   },
-  { href: '/coordinator', label: 'Team View', icon: Briefcase, roles: ['Coordinator'] },
+  { href: '/coordinator', label: 'Vista de Equipo', icon: Briefcase, roles: ['Coordinator'] },
   { 
     href: '/collaborator', 
-    label: 'Vote', 
+    label: 'Votar', 
     icon: Vote, 
     roles: ['Collaborator'],
     disabledCheck: (phases) => !phases.isVotingActive,
-    disabledTooltip: "The voting period is not active."
+    disabledTooltip: "El período de votación no está activo."
   },
   { 
     href: '/survey', 
-    label: 'Survey', 
+    label: 'Encuesta', 
     icon: ClipboardList, 
     roles: ['Supervisor', 'Coordinator'],
     disabledCheck: (phases) => !phases.isEvaluationActive,
-    disabledTooltip: "The peer evaluation period is not active."
+    disabledTooltip: "El período de evaluación de pares no está activo."
   },
-  { href: '/results', label: 'Results', icon: Trophy, roles: ['Admin', 'Supervisor', 'Coordinator', 'Collaborator'] },
+  { href: '/results', label: 'Resultados', icon: Trophy, roles: ['Admin', 'Supervisor', 'Coordinator', 'Collaborator'] },
 ];
 
 interface PhaseInfo {

@@ -69,11 +69,11 @@ export default function ResultsPage() {
     if (!winner || !lastEvent) {
         return (
             <div className="space-y-6">
-                <h1 className="text-3xl font-bold tracking-tight">Results</h1>
+                <h1 className="text-3xl font-bold tracking-tight">Resultados</h1>
                 <Card>
                     <CardHeader>
-                        <CardTitle>No Results Available</CardTitle>
-                        <CardDescription>There are no results from previous events to display yet.</CardDescription>
+                        <CardTitle>No Hay Resultados Disponibles</CardTitle>
+                        <CardDescription>Todavía no hay resultados de eventos anteriores para mostrar.</CardDescription>
                     </CardHeader>
                 </Card>
             </div>
@@ -82,14 +82,14 @@ export default function ResultsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold tracking-tight">Winner for {lastEvent.month}</h1>
+      <h1 className="text-3xl font-bold tracking-tight">Ganador de {lastEvent.month}</h1>
 
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader className="text-center">
             <Trophy className="mx-auto h-12 w-12 text-yellow-500" />
-            <CardTitle className="text-4xl font-bold">Soy El Mejor!</CardTitle>
-            <CardDescription className="text-lg">Congratulations to our Employee of the Month!</CardDescription>
+            <CardTitle className="text-4xl font-bold">¡Soy El Mejor!</CardTitle>
+            <CardDescription className="text-lg">¡Felicitaciones a nuestro Empleado del Mes!</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col items-center gap-4">
             <Avatar className="h-32 w-32 border-4 border-primary" data-ai-hint="person face">
@@ -101,15 +101,15 @@ export default function ResultsPage() {
               <p className="text-xl text-muted-foreground">{winner.department}</p>
             </div>
             <p className="max-w-prose text-center text-muted-foreground italic p-4 bg-muted rounded-lg">
-              "For their outstanding contribution and for always going the extra mile. Your hard work inspires us all. Well done, {winner.name.split(' ')[0]}!"
+              "Por su destacada contribución y por siempre dar la milla extra. Tu arduo trabajo nos inspira a todos. ¡Bien hecho, {winner.name.split(' ')[0]}!"
             </p>
           </CardContent>
         </Card>
 
         <Card>
             <CardHeader>
-                <CardTitle>Voting Results</CardTitle>
-                <CardDescription>Final vote count for the top nominees in {lastEvent.month}.</CardDescription>
+                <CardTitle>Resultados de la Votación</CardTitle>
+                <CardDescription>Recuento final de votos para los principales nominados en {lastEvent.month}.</CardDescription>
             </CardHeader>
             <CardContent>
                 <ResponsiveContainer width="100%" height={300}>

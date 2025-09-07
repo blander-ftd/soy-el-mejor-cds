@@ -4,16 +4,16 @@ import { HardHat } from "lucide-react";
 export default function CoordinatorPage() {
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold tracking-tight">Coordinator Dashboard</h1>
+      <h1 className="text-3xl font-bold tracking-tight">Panel de Coordinador</h1>
       <Card>
         <CardHeader>
-          <CardTitle>Welcome, Coordinator!</CardTitle>
-          <CardDescription>Your dashboard is currently under construction.</CardDescription>
+          <CardTitle>¡Bienvenido, Coordinador!</CardTitle>
+          <CardDescription>Tu panel está actualmente en construcción.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col items-center justify-center gap-4 py-16 text-center">
             <HardHat className="h-16 w-16 text-muted-foreground" />
             <p className="max-w-md text-muted-foreground">
-                We're working hard to build a dedicated view for Coordinators. Please check back soon for exciting new features!
+                Estamos trabajando duro para construir una vista dedicada para los coordinadores. ¡Vuelve pronto para ver nuevas y emocionantes funciones!
             </p>
         </CardContent>
       </Card>
