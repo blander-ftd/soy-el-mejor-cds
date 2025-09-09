@@ -1,29 +1,53 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useAuth } from "@/context/auth-context";
-import { users, nominations } from "@/lib/data";
+import { users, nominations, votingEvents } from "@/lib/data";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
+import { UserX, CalendarOff } from 'lucide-react';
+import type { User } from '@/lib/types';
+
 
 export default function CollaboratorPage() {
   const { currentUser } = useAuth();
   const [selected, setSelected] = useState<string[]>([]);
   const { toast } = useToast();
 
-  if (!currentUser) return null;
+  const activeEvent = useMemo(() => 
+    votingEvents.find(event => 
+        (event.department === currentUser?.department || event.department === 'All Departments') 
+        && event.status === 'Active'
+    ), [currentUser?.department]);
 
-  const nominees = nominations.map(nom => users.find(u => u.id === nom.collaboratorId)).filter(Boolean) as any[];
+  const nominees = useMemo(() => {
+    if (!activeEvent || !currentUser) return [];
+
+    const eventNominations = nominations.filter(nom => nom.eventId === activeEvent.id);
+    const nomineeIds = [...new Set(eventNominations.map(nom => nom.collaboratorId))];
+    
+    return nomineeIds
+      .map(id => users.find(u => u.id === id && u.id !== currentUser.id)) // Exclude current user from nominees list
+      .filter(Boolean) as User[];
+  }, [activeEvent, currentUser]);
+
+  const voteLimit = useMemo(() => {
+    const n = nominees.length;
+    if (n <= 1) return 0;
+    return Math.min(n - 1, 3);
+  }, [nominees]);
+
+  if (!currentUser) return null;
 
   const handleVote = (id: string) => {
     setSelected(prev => {
       if (prev.includes(id)) {
         return prev.filter(item => item !== id);
       }
-      if (prev.length < 3) {
+      if (prev.length < voteLimit) {
         return [...prev, id];
       }
       return prev;
@@ -38,11 +62,46 @@ export default function CollaboratorPage() {
     setSelected([]);
   }
 
+  if (!activeEvent) {
+    return (
+        <div className="flex items-center justify-center h-[60vh]">
+             <Card className="w-full max-w-lg text-center">
+                <CardContent className="flex flex-col items-center justify-center gap-4 py-16">
+                    <CalendarOff className="h-16 w-16 text-muted-foreground" />
+                    <h3 className="text-xl font-semibold">No Hay un Período de Votación Activo</h3>
+                    <p className="max-w-md text-muted-foreground">
+                        Actualmente no hay ningún evento de votación activo para tu departamento.
+                    </p>
+                </CardContent>
+            </Card>
+        </div>
+    );
+  }
+
+  if (nominees.length === 0) {
+     return (
+        <div className="flex items-center justify-center h-[60vh]">
+             <Card className="w-full max-w-lg text-center">
+                <CardContent className="flex flex-col items-center justify-center gap-4 py-16">
+                    <UserX className="h-16 w-16 text-muted-foreground" />
+                    <h3 className="text-xl font-semibold">No Hay Nominados para Votar</h3>
+                    <p className="max-w-md text-muted-foreground">
+                        Actualmente no hay colaboradores nominados para el evento de {activeEvent.month}.
+                    </p>
+                </CardContent>
+            </Card>
+        </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold tracking-tight">Emite tu Voto</h1>
       <p className="text-muted-foreground">
-        Selecciona hasta 3 colegas de tu departamento que crees que merecen ser 'Soy El Mejor'.
+        {voteLimit > 0 
+          ? `Selecciona hasta ${voteLimit} colega(s) de tu departamento que crees que merecen ser 'Soy El Mejor'.`
+          : "No hay suficientes nominados para realizar una votación."
+        }
       </p>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -65,7 +124,7 @@ export default function CollaboratorPage() {
                   id={`vote-${nominee.id}`} 
                   checked={selected.includes(nominee.id)}
                   onCheckedChange={() => handleVote(nominee.id)}
-                  disabled={selected.length >= 3 && !selected.includes(nominee.id)}
+                  disabled={(selected.length >= voteLimit && !selected.includes(nominee.id)) || voteLimit === 0}
                 />
                 <label
                   htmlFor={`vote-${nominee.id}`}
