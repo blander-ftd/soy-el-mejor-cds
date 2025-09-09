@@ -121,26 +121,30 @@ export default function SurveyPage() {
                     <CardDescription>{nominee.department}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-8 pt-4">
-                  {surveyQuestions.map((q, qIndex) => (
-                    <div key={qIndex} className="space-y-3">
-                      <div className="text-center">
-                        <Label htmlFor={`slider-${index}-${qIndex}`} className="font-semibold">{q.title}</Label>
-                        <p className="text-sm text-muted-foreground">{q.body}</p>
-                      </div>
-                      <div className="flex items-center gap-4">
-                          <span className="text-xs font-bold w-4 text-center">1</span>
-                           <Slider
-                                id={`slider-${index}-${qIndex}`}
-                                min={1}
-                                max={10}
-                                step={1}
-                                value={[evaluations[nominee.id]?.[qIndex] ?? 5]}
-                                onValueChange={(value) => handleSliderChange(nominee.id, qIndex, value)}
-                           />
-                           <span className="text-xs font-bold w-4 text-center">10</span>
-                      </div>
-                    </div>
-                  ))}
+                  {surveyQuestions.map((q, qIndex) => {
+                    const value = evaluations[nominee.id]?.[qIndex] ?? 5;
+                    return(
+                        <div key={qIndex} className="space-y-3">
+                          <div className="text-center">
+                            <Label htmlFor={`slider-${index}-${qIndex}`} className="font-semibold">{q.title}</Label>
+                            <p className="text-sm text-muted-foreground">{q.body}</p>
+                          </div>
+                          <div className="flex items-center gap-4">
+                              <span className="text-xs font-bold w-4 text-center">1</span>
+                               <Slider
+                                    id={`slider-${index}-${qIndex}`}
+                                    min={1}
+                                    max={10}
+                                    step={1}
+                                    value={[value]}
+                                    onValueChange={(value) => handleSliderChange(nominee.id, qIndex, value)}
+                               />
+                               <span className="text-sm font-semibold w-6 text-center tabular-nums">{value}</span>
+                               <span className="text-xs font-bold w-4 text-center">10</span>
+                          </div>
+                        </div>
+                    )
+                  })}
                 </CardContent>
                 <CardFooter className="flex-col gap-4">
                     <Button onClick={() => handleSubmit(nominee.id)} size="lg" className="w-full">
