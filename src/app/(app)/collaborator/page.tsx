@@ -36,7 +36,7 @@ export default function CollaboratorPage() {
 
   const voteLimit = useMemo(() => {
     const n = nominees.length;
-    if (n <= 1) return 0;
+    if (n < 2) return 0; // Can't vote if there's only 1 or 0 nominees
     return Math.min(n - 1, 3);
   }, [nominees]);
 
