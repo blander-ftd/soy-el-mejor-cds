@@ -15,6 +15,18 @@ export const users: User[] = [
   { id: 'user-10', name: 'Jordan Taylor', email: 'collaborator.tech.5@example.com', role: 'Collaborator', department: 'Technology', avatar: 'https://picsum.photos/id/10/100' },
   { id: 'user-11', name: 'Morgan Lee', email: 'collaborator.tech.6@example.com', role: 'Collaborator', department: 'Technology', avatar: 'https://picsum.photos/id/11/100' },
   { id: 'user-12', name: 'Taylor Swift', email: 'collaborator.tech.7@example.com', role: 'Collaborator', department: 'Technology', avatar: 'https://picsum.photos/id/12/100' },
+  { id: 'user-13', name: 'Chris Green', email: 'collaborator.mktg.2@example.com', role: 'Collaborator', department: 'Marketing', avatar: 'https://picsum.photos/id/13/100' },
+  { id: 'user-14', name: 'Patricia Hill', email: 'collaborator.mktg.3@example.com', role: 'Collaborator', department: 'Marketing', avatar: 'https://picsum.photos/id/14/100' },
+  { id: 'user-15', name: 'Robert Hall', email: 'supervisor.sales@example.com', role: 'Supervisor', department: 'Sales', avatar: 'https://picsum.photos/id/15/100' },
+  { id: 'user-16', name: 'Jennifer Adams', email: 'collaborator.sales.1@example.com', role: 'Collaborator', department: 'Sales', avatar: 'https://picsum.photos/id/16/100' },
+  { id: 'user-17', name: 'Michael Nelson', email: 'collaborator.sales.2@example.com', role: 'Collaborator', department: 'Sales', avatar: 'https://picsum.photos/id/17/100' },
+  { id: 'user-18', name: 'Barbara Carter', email: 'supervisor.hr@example.com', role: 'Supervisor', department: 'Human Resources', avatar: 'https://picsum.photos/id/18/100' },
+  { id: 'user-19', name: 'William Baker', email: 'collaborator.hr.1@example.com', role: 'Collaborator', department: 'Human Resources', avatar: 'https://picsum.photos/id/19/100' },
+  { id: 'user-20', name: 'Elizabeth Clark', email: 'collaborator.hr.2@example.com', role: 'Collaborator', department: 'Human Resources', avatar: 'https://picsum.photos/id/20/100' },
+  { id: 'user-21', name: 'Joseph Lewis', email: 'coordinator.mktg@example.com', role: 'Coordinator', department: 'Marketing', avatar: 'https://picsum.photos/id/21/100' },
+  { id: 'user-22', name: 'Susan Walker', email: 'coordinator.sales@example.com', role: 'Coordinator', department: 'Sales', avatar: 'https://picsum.photos/id/22/100' },
+  { id: 'user-23', name: 'Thomas Robinson', email: 'coordinator.hr@example.com', role: 'Coordinator', department: 'Human Resources', avatar: 'https://picsum.photos/id/23/100' },
+  { id: 'user-24', name: 'Jessica Wright', email: 'collaborator.sales.3@example.com', role: 'Collaborator', department: 'Sales', avatar: 'https://picsum.photos/id/24/100' }
 ];
 
 const defaultSurveyQuestions = [
