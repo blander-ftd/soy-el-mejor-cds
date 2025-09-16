@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from 'react';
@@ -9,13 +10,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import AppLogo from '@/components/app-logo';
-import { users } from '@/lib/data';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { cn } from '@/lib/utils';
-import type { User } from '@/lib/types';
 
 export default function LoginPage() {
   const [email, setEmail] = React.useState('');
+  const [password, setPassword] = React.useState('');
   const [isLoading, setIsLoading] = React.useState(false);
   const { login } = useAuth();
   const router = useRouter();
@@ -27,7 +25,7 @@ export default function LoginPage() {
 
     // In a real app, you'd have an async call here.
     setTimeout(() => {
-      const success = login(email);
+      const success = login(email, password);
       if (success) {
         toast({
           title: 'Inicio de Sesión Exitoso',
@@ -44,14 +42,6 @@ export default function LoginPage() {
       }
     }, 1000);
   };
-  
-  const displayUsers = users.reduce((acc, user) => {
-    if (!acc.some(u => u.role === user.role)) {
-        acc.push(user);
-    }
-    return acc;
-  }, [] as User[]);
-
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -66,23 +56,30 @@ export default function LoginPage() {
         <form onSubmit={handleLogin}>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Seleccionar Usuario (para demostración)</Label>
-              <Select value={email} onValueChange={setEmail} required>
-                <SelectTrigger id="email">
-                  <SelectValue placeholder="Selecciona un usuario para iniciar sesión" />
-                </SelectTrigger>
-                <SelectContent>
-                  {displayUsers.map((user) => (
-                    <SelectItem key={user.id} value={user.email} className="truncate">
-                      <span className="truncate">{user.name} ({user.role})</span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label htmlFor="email">Correo Electrónico</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="tu@email.com"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Contraseña</Label>
+              <Input 
+                id="password" 
+                type="password" 
+                required 
+                placeholder="********"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
             </div>
           </CardContent>
           <CardFooter>
-            <Button type="submit" className="w-full" disabled={isLoading || !email}>
+            <Button type="submit" className="w-full" disabled={isLoading || !email || !password}>
               {isLoading ? 'Iniciando Sesión...' : 'Iniciar Sesión'}
             </Button>
           </CardFooter>
