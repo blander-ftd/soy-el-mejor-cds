@@ -58,7 +58,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4">
-            <AppLogo />
+            <AppLogo className="size-12" />
           </div>
           <CardTitle className="text-2xl">Soy El Mejor</CardTitle>
           <CardDescription>Inicia sesión para emitir tu voto</CardDescription>

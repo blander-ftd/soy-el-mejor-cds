@@ -32,9 +32,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <aside className="fixed inset-y-0 left-0 z-10 hidden w-64 flex-col border-r bg-card sm:flex">
         <div className="flex h-16 items-center border-b px-6">
           <div className="flex items-center gap-2 font-semibold">
-            <div className="size-10">
-              <AppLogo />
-            </div>
+            <AppLogo className="size-10" />
             <span>Soy El Mejor</span>
           </div>
         </div>
