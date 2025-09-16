@@ -12,7 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import AppLogo from '@/components/app-logo';
 
 export default function LoginPage() {
-  const [email, setEmail] = React.useState('');
+  const [identifier, setIdentifier] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [isLoading, setIsLoading] = React.useState(false);
   const { login } = useAuth();
@@ -25,7 +25,7 @@ export default function LoginPage() {
 
     // In a real app, you'd have an async call here.
     setTimeout(() => {
-      const success = login(email, password);
+      const success = login(identifier, password);
       if (success) {
         toast({
           title: 'Inicio de Sesión Exitoso',
@@ -36,7 +36,7 @@ export default function LoginPage() {
         toast({
           variant: 'destructive',
           title: 'Inicio de Sesión Fallido',
-          description: 'Correo electrónico o contraseña no válidos. Por favor, inténtalo de nuevo.',
+          description: 'Credenciales no válidas. Por favor, inténtalo de nuevo.',
         });
         setIsLoading(false);
       }
@@ -56,14 +56,14 @@ export default function LoginPage() {
         <form onSubmit={handleLogin}>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Correo Electrónico</Label>
+              <Label htmlFor="identifier">Correo Electrónico o Cédula</Label>
               <Input
-                id="email"
-                type="email"
-                placeholder="tu@email.com"
+                id="identifier"
+                type="text"
+                placeholder="tu@email.com o 12345678"
                 required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
               />
             </div>
             <div className="space-y-2">
@@ -79,7 +79,7 @@ export default function LoginPage() {
             </div>
           </CardContent>
           <CardFooter>
-            <Button type="submit" className="w-full" disabled={isLoading || !email || !password}>
+            <Button type="submit" className="w-full" disabled={isLoading || !identifier || !password}>
               {isLoading ? 'Iniciando Sesión...' : 'Iniciar Sesión'}
             </Button>
           </CardFooter>

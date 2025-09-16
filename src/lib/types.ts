@@ -6,6 +6,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  cedula?: string;
   role: Role;
   department: Department;
   avatar: string;

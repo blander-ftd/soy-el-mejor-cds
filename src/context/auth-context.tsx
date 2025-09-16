@@ -8,7 +8,7 @@ import { users } from '@/lib/data';
 
 interface AuthContextType {
   currentUser: User | null;
-  login: (email: string, password?: string) => boolean;
+  login: (identifier: string, password?: string) => boolean;
   logout: () => void;
   loading: boolean;
 }
@@ -22,20 +22,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   React.useEffect(() => {
     // Simulate checking for a logged-in user in session storage
-    const storedUserEmail = sessionStorage.getItem('currentUserEmail');
-    if (storedUserEmail) {
-      const user = users.find(u => u.email === storedUserEmail);
+    const storedUserIdentifier = sessionStorage.getItem('currentUserEmail'); // This key can remain for compatibility
+    if (storedUserIdentifier) {
+      const user = users.find(u => u.email === storedUserIdentifier || u.cedula === storedUserIdentifier);
       setCurrentUser(user || null);
     }
     setLoading(false);
   }, []);
 
-  const login = (email: string, password?: string) => {
+  const login = (identifier: string, password?: string) => {
     // This is a mock login. In a real app, you'd validate the password against a backend.
-    const user = users.find(u => u.email === email);
+    const user = users.find(u => u.email === identifier || u.cedula === identifier);
     if (user) {
       setCurrentUser(user);
-      sessionStorage.setItem('currentUserEmail', user.email);
+      sessionStorage.setItem('currentUserEmail', user.email); // Store email for session persistence
       return true;
     }
     return false;
