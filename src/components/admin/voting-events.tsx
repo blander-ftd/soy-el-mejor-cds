@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { votingEvents as initialVotingEvents, departments } from "@/lib/data";
-import type { VotingEvent } from "@/lib/types";
+import type { VotingEvent, Department } from "@/lib/types";
 import {
   Table,
   TableBody,
@@ -144,10 +144,10 @@ export function VotingEvents() {
         const eventData: VotingEvent = {
             id: editingEvent?.id || `event-${Date.now()}`,
             month: data.month,
-            department: data.department,
+            department: data.department as Department | "All Departments",
             startDate: data.dateRange.from,
             endDate: data.dateRange.to,
-            status: editingEvent?.status || "Pendiente",
+            status: editingEvent?.status || "Pending",
             surveyQuestions: data.surveyQuestions,
         };
 

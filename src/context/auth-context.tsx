@@ -1,15 +1,24 @@
 
 "use client";
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
+import { 
+  signInWithEmailAndPassword, 
+  signOut, 
+  onAuthStateChanged,
+  User as FirebaseUser 
+} from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
+import { auth, db } from '@/lib/firebase';
 import type { User } from '@/lib/types';
 import { users } from '@/lib/data';
 
 interface AuthContextType {
   currentUser: User | null;
-  login: (identifier: string, password?: string) => boolean;
-  logout: () => void;
+  firebaseUser: FirebaseUser | null;
+  login: (email: string, password: string) => Promise<boolean>;
+  logout: () => Promise<void>;
   loading: boolean;
 }
 
@@ -17,37 +26,61 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  React.useEffect(() => {
-    // Simulate checking for a logged-in user in session storage
-    const storedUserIdentifier = sessionStorage.getItem('currentUserEmail'); // This key can remain for compatibility
-    if (storedUserIdentifier) {
-      const user = users.find(u => u.email === storedUserIdentifier || u.cedula === storedUserIdentifier);
-      setCurrentUser(user || null);
-    }
-    setLoading(false);
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
+      setFirebaseUser(firebaseUser);
+      
+      if (firebaseUser) {
+        // Try to get user data from Firestore first
+        try {
+          const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+          if (userDoc.exists()) {
+            setCurrentUser(userDoc.data() as User);
+          } else {
+            // Fallback to local data for development
+            const localUser = users.find(u => u.email === firebaseUser.email);
+            setCurrentUser(localUser || null);
+          }
+        } catch (error) {
+          console.error('Error fetching user data:', error);
+          // Fallback to local data
+          const localUser = users.find(u => u.email === firebaseUser.email);
+          setCurrentUser(localUser || null);
+        }
+      } else {
+        setCurrentUser(null);
+      }
+      
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
 
-  const login = (identifier: string, password?: string) => {
-    // This is a mock login. In a real app, you'd validate the password against a backend.
-    const user = users.find(u => u.email === identifier || u.cedula === identifier);
-    if (user) {
-      setCurrentUser(user);
-      sessionStorage.setItem('currentUserEmail', user.email); // Store email for session persistence
+  const login = async (email: string, password: string): Promise<boolean> => {
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
       return true;
+    } catch (error) {
+      console.error('Login error:', error);
+      return false;
     }
-    return false;
   };
 
-  const logout = () => {
-    setCurrentUser(null);
-    sessionStorage.removeItem('currentUserEmail');
-    router.push('/login');
+  const logout = async (): Promise<void> => {
+    try {
+      await signOut(auth);
+      router.push('/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
   };
 
-  const value = { currentUser, login, logout, loading };
+  const value = { currentUser, firebaseUser, login, logout, loading };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

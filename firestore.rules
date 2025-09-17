@@ -1,0 +1,36 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Users can read and write their own user document
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Allow authenticated users to read and write voting events
+    match /voting_events/{eventId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Allow authenticated users to read and write nominations
+    match /nominations/{nominationId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Allow authenticated users to read and write votes
+    match /votes/{voteId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Allow authenticated users to read and write audit logs
+    match /audit_logs/{logId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // For development: Allow all authenticated users to read/write all documents
+    // TODO: Replace with more specific rules for production
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}
