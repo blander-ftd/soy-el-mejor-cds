@@ -112,7 +112,7 @@ export default function ResultsPage() {
                 setError(null);
 
                 const [eventsData, usersData, nominationsData, votesData, evaluationsData] = await Promise.all([
-                    votingEventService.getAll(),
+                    votingEventService.getAllWithStatusUpdate(),
                     userService.getAll(),
                     nominationService.getAll(),
                     voteService.getAll(),

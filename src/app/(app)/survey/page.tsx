@@ -56,8 +56,8 @@ export default function SurveyPage() {
         setLoading(true);
         setError(null);
 
-        // Get active voting events
-        const activeEvents = await votingEventService.getActive();
+        // Get active voting events (with automatic status updates)
+        const activeEvents = await votingEventService.getActiveWithStatusUpdate();
         const currentActiveEvent = activeEvents.length > 0 ? activeEvents[0] : null;
         setActiveEvent(currentActiveEvent);
 

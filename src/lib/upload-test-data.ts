@@ -28,9 +28,15 @@ const convertVotingEventsToFirebase = () => {
   return votingEvents.map(event => {
     const firebaseEvent: any = {
       month: event.month,
-      department: event.department,
+      department: "All Departments", // Updated to match current schema
       status: event.status,
-      surveyQuestions: event.surveyQuestions || [],
+      surveyQuestions: event.surveyQuestions || [
+        { title: 'Trabajo en Equipo y Colaboración', body: '¿Qué tan bien colabora esta persona con otros hacia un objetivo común?' },
+        { title: 'Innovación y Creatividad', body: '¿Aporta esta persona ideas nuevas y creativas o mejora los procesos existentes?' },
+        { title: 'Liderazgo y Mentoría', body: '¿Demuestra esta persona cualidades de liderazgo o mentorea activamente a otros?' },
+        { title: 'Resolución de Problemas y Resiliencia', body: '¿Cuán efectiva es esta persona para superar desafíos y encontrar soluciones?' },
+        { title: 'Impacto y Contribución', body: '¿Cuál ha sido la contribución o impacto más significativo de esta persona este mes?' }
+      ],
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now()
     };
@@ -41,6 +47,20 @@ const convertVotingEventsToFirebase = () => {
     }
     if (event.endDate) {
       firebaseEvent.endDate = Timestamp.fromDate(event.endDate);
+      // Set additional dates based on the end date for proper event phases
+      const endDate = new Date(event.endDate);
+      const startDate = new Date(event.startDate || endDate);
+      
+      // Calculate phase dates (nomination: first 1/3, voting: middle 1/3, evaluation: last 1/3)
+      const totalDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+      const phaseLength = Math.ceil(totalDays / 3);
+      
+      const nominationEnd = new Date(startDate.getTime() + (phaseLength * 24 * 60 * 60 * 1000));
+      const votingEnd = new Date(startDate.getTime() + (phaseLength * 2 * 24 * 60 * 60 * 1000));
+      
+      firebaseEvent.nominationEndDate = Timestamp.fromDate(nominationEnd);
+      firebaseEvent.votingEndDate = Timestamp.fromDate(votingEnd);
+      firebaseEvent.evaluationEndDate = Timestamp.fromDate(endDate);
     }
 
     return firebaseEvent;
@@ -150,7 +170,7 @@ const createAdditionalTestData = () => {
   const additionalEvents = [
     {
       month: 'Septiembre 2024',
-      department: 'Technology' as const,
+      department: 'All Departments' as const,
       status: 'Active' as const,
       startDate: Timestamp.fromDate(new Date('2024-09-01')),
       endDate: Timestamp.fromDate(new Date('2024-09-30')),
@@ -158,11 +178,11 @@ const createAdditionalTestData = () => {
       votingEndDate: Timestamp.fromDate(new Date('2024-09-20')),
       evaluationEndDate: Timestamp.fromDate(new Date('2024-09-30')),
       surveyQuestions: [
-        { title: 'Trabajo en Equipo', body: '¿Qué tan bien colabora esta persona con otros?' },
-        { title: 'Innovación', body: '¿Aporta esta persona ideas nuevas y creativas?' },
-        { title: 'Liderazgo', body: '¿Demuestra esta persona cualidades de liderazgo?' },
-        { title: 'Resolución de Problemas', body: '¿Cuán efectiva es esta persona para resolver problemas?' },
-        { title: 'Contribución General', body: '¿Cuál ha sido su contribución más significativa?' }
+        { title: 'Trabajo en Equipo y Colaboración', body: '¿Qué tan bien colabora esta persona con otros hacia un objetivo común?' },
+        { title: 'Innovación y Creatividad', body: '¿Aporta esta persona ideas nuevas y creativas o mejora los procesos existentes?' },
+        { title: 'Liderazgo y Mentoría', body: '¿Demuestra esta persona cualidades de liderazgo o mentorea activamente a otros?' },
+        { title: 'Resolución de Problemas y Resiliencia', body: '¿Cuán efectiva es esta persona para superar desafíos y encontrar soluciones?' },
+        { title: 'Impacto y Contribución', body: '¿Cuál ha sido la contribución o impacto más significativo de esta persona este mes?' }
       ],
       createdBy: 'user-1',
       createdAt: Timestamp.now(),
@@ -170,14 +190,40 @@ const createAdditionalTestData = () => {
     },
     {
       month: 'Octubre 2024',
-      department: 'Marketing' as const,
+      department: 'All Departments' as const,
       status: 'Pending' as const,
+      startDate: Timestamp.fromDate(new Date('2024-10-01')),
+      endDate: Timestamp.fromDate(new Date('2024-10-31')),
+      nominationEndDate: Timestamp.fromDate(new Date('2024-10-10')),
+      votingEndDate: Timestamp.fromDate(new Date('2024-10-20')),
+      evaluationEndDate: Timestamp.fromDate(new Date('2024-10-31')),
       surveyQuestions: [
-        { title: 'Creatividad', body: '¿Qué tan creativa es esta persona en sus campañas?' },
-        { title: 'Comunicación', body: '¿Cómo se comunica esta persona con los clientes?' },
-        { title: 'Resultados', body: '¿Qué resultados ha logrado esta persona?' },
-        { title: 'Innovación Digital', body: '¿Cómo usa las herramientas digitales?' },
-        { title: 'Trabajo en Equipo', body: '¿Colabora bien con el equipo de marketing?' }
+        { title: 'Trabajo en Equipo y Colaboración', body: '¿Qué tan bien colabora esta persona con otros hacia un objetivo común?' },
+        { title: 'Innovación y Creatividad', body: '¿Aporta esta persona ideas nuevas y creativas o mejora los procesos existentes?' },
+        { title: 'Liderazgo y Mentoría', body: '¿Demuestra esta persona cualidades de liderazgo o mentorea activamente a otros?' },
+        { title: 'Resolución de Problemas y Resiliencia', body: '¿Cuán efectiva es esta persona para superar desafíos y encontrar soluciones?' },
+        { title: 'Impacto y Contribución', body: '¿Cuál ha sido la contribución o impacto más significativo de esta persona este mes?' }
+      ],
+      createdBy: 'user-1',
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now()
+    },
+    {
+      month: 'Noviembre 2024',
+      department: 'All Departments' as const,
+      status: 'Closed' as const,
+      startDate: Timestamp.fromDate(new Date('2024-11-01')),
+      endDate: Timestamp.fromDate(new Date('2024-11-30')),
+      nominationEndDate: Timestamp.fromDate(new Date('2024-11-10')),
+      votingEndDate: Timestamp.fromDate(new Date('2024-11-20')),
+      evaluationEndDate: Timestamp.fromDate(new Date('2024-11-30')),
+      winnerMessage: 'Felicitaciones a todos los ganadores del mes de Noviembre 2024!',
+      surveyQuestions: [
+        { title: 'Trabajo en Equipo y Colaboración', body: '¿Qué tan bien colabora esta persona con otros hacia un objetivo común?' },
+        { title: 'Innovación y Creatividad', body: '¿Aporta esta persona ideas nuevas y creativas o mejora los procesos existentes?' },
+        { title: 'Liderazgo y Mentoría', body: '¿Demuestra esta persona cualidades de liderazgo o mentorea activamente a otros?' },
+        { title: 'Resolución de Problemas y Resiliencia', body: '¿Cuán efectiva es esta persona para superar desafíos y encontrar soluciones?' },
+        { title: 'Impacto y Contribución', body: '¿Cuál ha sido la contribución o impacto más significativo de esta persona este mes?' }
       ],
       createdBy: 'user-1',
       createdAt: Timestamp.now(),

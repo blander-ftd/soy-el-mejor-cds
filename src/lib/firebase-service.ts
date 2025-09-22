@@ -18,6 +18,7 @@ import { db, functions } from './firebase';
 import { 
   User, 
   VotingEvent, 
+  VotingEventStatus,
   AuditLog, 
   Nomination, 
   Vote, 
@@ -203,6 +204,75 @@ export const votingEventService = {
     );
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(doc => doc.data());
+  },
+
+  /**
+   * Gets active events and automatically updates their statuses based on dates
+   */
+  async getActiveWithStatusUpdate(): Promise<VotingEvent[]> {
+    // First update all event statuses
+    await this.updateAllEventStatusesByDate();
+    
+    // Then get the currently active events
+    return await this.getActive();
+  },
+
+  /**
+   * Updates event status based on current date and event dates
+   */
+  async updateEventStatusByDate(event: VotingEvent): Promise<VotingEvent> {
+    const now = new Date();
+    let newStatus: VotingEventStatus = event.status;
+
+    // Convert Firestore Timestamps to Dates for comparison
+    const startDate = event.startDate?.toDate();
+    const endDate = event.endDate?.toDate();
+    const evaluationEndDate = event.evaluationEndDate?.toDate();
+
+    // Determine status based on dates
+    if (evaluationEndDate && now > evaluationEndDate) {
+      // Event is completely finished (past evaluation end date)
+      newStatus = 'Closed';
+    } else if (endDate && now > endDate) {
+      // Event voting period is over, but evaluation might still be ongoing
+      newStatus = 'Closed';
+    } else if (startDate && now >= startDate) {
+      // Event has started
+      newStatus = 'Active';
+    } else {
+      // Event hasn't started yet
+      newStatus = 'Pending';
+    }
+
+    // Update status if it has changed
+    if (newStatus !== event.status) {
+      await this.update(event.id, { status: newStatus });
+      return { ...event, status: newStatus };
+    }
+
+    return event;
+  },
+
+  /**
+   * Updates all events' statuses based on current date
+   */
+  async updateAllEventStatusesByDate(): Promise<VotingEvent[]> {
+    const allEvents = await this.getAll();
+    const updatedEvents: VotingEvent[] = [];
+
+    for (const event of allEvents) {
+      const updatedEvent = await this.updateEventStatusByDate(event);
+      updatedEvents.push(updatedEvent);
+    }
+
+    return updatedEvents;
+  },
+
+  /**
+   * Gets all events and automatically updates their statuses based on dates
+   */
+  async getAllWithStatusUpdate(): Promise<VotingEvent[]> {
+    return await this.updateAllEventStatusesByDate();
   }
 };
 
@@ -624,5 +694,81 @@ export const batchService = {
     }
 
     await batch.commit();
+  },
+
+  /**
+   * Deletes all test data from all Firebase collections
+   * WARNING: This will delete ALL data in the database!
+   */
+  async deleteAllTestData(): Promise<void> {
+    console.log('🗑️ Starting deletion of all test data...');
+
+    // Get all collections
+    const collections = [
+      COLLECTIONS.USERS,
+      COLLECTIONS.VOTING_EVENTS,
+      COLLECTIONS.NOMINATIONS,
+      COLLECTIONS.VOTES,
+      COLLECTIONS.SURVEY_EVALUATIONS,
+      COLLECTIONS.DEPARTMENTS,
+      COLLECTIONS.AUDIT_LOGS
+    ];
+
+    let totalDeleted = 0;
+
+    for (const collectionName of collections) {
+      console.log(`🗑️ Deleting documents from ${collectionName}...`);
+      
+      // Get all documents in the collection
+      const querySnapshot = await getDocs(collection(db, collectionName));
+      const docs = querySnapshot.docs;
+      
+      if (docs.length === 0) {
+        console.log(`✅ ${collectionName}: No documents to delete`);
+        continue;
+      }
+
+      // Delete in batches of 500 (Firestore limit)
+      const batchSize = 500;
+      let deletedInCollection = 0;
+
+      for (let i = 0; i < docs.length; i += batchSize) {
+        const batch = writeBatch(db);
+        const batchDocs = docs.slice(i, i + batchSize);
+
+        batchDocs.forEach(docSnapshot => {
+          batch.delete(docSnapshot.ref);
+        });
+
+        await batch.commit();
+        deletedInCollection += batchDocs.length;
+        totalDeleted += batchDocs.length;
+      }
+
+      console.log(`✅ ${collectionName}: Deleted ${deletedInCollection} documents`);
+    }
+
+    console.log(`🎉 Successfully deleted ${totalDeleted} documents from all collections!`);
+  },
+
+  /**
+   * Deletes all data and uploads fresh test data
+   */
+  async resetWithTestData(testData: {
+    users: Omit<User, 'id'>[];
+    votingEvents: Omit<VotingEvent, 'id'>[];
+    auditLogs: Omit<AuditLog, 'id'>[];
+    departments: Omit<Department, 'id'>[];
+    surveyEvaluations?: Omit<SurveyEvaluation, 'id'>[];
+  }): Promise<void> {
+    console.log('🔄 Resetting database with fresh test data...');
+    
+    // First delete all existing data
+    await this.deleteAllTestData();
+    
+    // Then upload new test data
+    await this.uploadTestData(testData);
+    
+    console.log('✅ Database reset complete!');
   }
 };

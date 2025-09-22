@@ -7,6 +7,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Upload, CheckCircle, AlertCircle, Database, Trash2 } from "lucide-react";
 import { uploadTestData, canUploadTestData } from "@/lib/upload-test-data";
+import { batchService } from "@/lib/firebase-service";
 import { useToast } from "@/hooks/use-toast";
 import { testNominatedEntries, users } from "@/lib/data";
 
@@ -58,22 +59,46 @@ export function TestDataUploader() {
       return;
     }
 
+    // Confirm deletion with user
+    const confirmed = window.confirm(
+      "⚠️ ADVERTENCIA: Esta acción eliminará TODOS los datos de TODAS las colecciones en Firebase.\n\n" +
+      "Esto incluye:\n" +
+      "• Todos los usuarios\n" +
+      "• Todos los eventos de votación\n" +
+      "• Todas las nominaciones\n" +
+      "• Todos los votos\n" +
+      "• Todas las evaluaciones\n" +
+      "• Todos los departamentos\n" +
+      "• Todos los registros de auditoría\n\n" +
+      "¿Estás seguro de que quieres continuar?"
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
     try {
       setIsDeleting(true);
-      // In a real application, this would delete the test data from Firebase
-      // For now, we'll simulate the deletion
+      console.log('🗑️ Starting deletion of all Firebase collections...');
+      
+      // Delete all data from Firebase
+      await batchService.deleteAllTestData();
+      
       setUploadComplete(false);
       setShowNominatedData(false);
+      
       toast({
-        title: "¡Datos de Prueba Eliminados!",
-        description: "Los datos de prueba han sido eliminados exitosamente.",
+        title: "¡Datos Eliminados Completamente!",
+        description: "Todos los datos han sido eliminados de todas las colecciones de Firebase.",
       });
+      
+      console.log('✅ All Firebase data deleted successfully!');
     } catch (error) {
-      console.error('Error deleting test data:', error);
+      console.error('❌ Error deleting Firebase data:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "No se pudieron eliminar los datos de prueba.",
+        description: "No se pudieron eliminar todos los datos. Verifica la consola para más detalles.",
       });
     } finally {
       setIsDeleting(false);
@@ -99,7 +124,7 @@ export function TestDataUploader() {
           Datos de Prueba
         </CardTitle>
         <CardDescription>
-          Carga datos de prueba en Firebase para poblar las listas de usuarios, eventos, registros de auditoría y listas de nominados por departamento.
+          Carga datos de prueba en Firebase para poblar las listas de usuarios, eventos, registros de auditoría y listas de nominados por departamento. También permite eliminar TODOS los datos de TODAS las colecciones.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -126,7 +151,7 @@ export function TestDataUploader() {
               ) : (
                 <>
                   <Trash2 className="mr-2 h-4 w-4" />
-                  Eliminar Datos de Prueba
+                  Eliminar TODOS los Datos
                 </>
               )}
             </Button>

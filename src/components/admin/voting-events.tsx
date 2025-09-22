@@ -147,7 +147,7 @@ export function VotingEvents() {
         try {
             setLoading(true);
             const [firebaseEvents, departmentsData] = await Promise.all([
-                votingEventService.getAll(),
+                votingEventService.getAllWithStatusUpdate(),
                 departmentService.getActiveOnly()
             ]);
             setVotingEvents(firebaseEvents);
@@ -607,7 +607,7 @@ export function VotingEvents() {
             await auditLogService.logAction(
                 currentUser.id,
                 currentUser.name,
-                'Agregar Puntos de Encuesta',
+                'Visualizador de Puntos de Encuesta',
                 {
                     eventId: selectedEvent.id,
                     department: selectedDepartment,
@@ -910,20 +910,48 @@ export function VotingEvents() {
                                     <FormMessage>{form.formState.errors.surveyQuestions?.message}</FormMessage>
                                 </div>
                                 
-                                <DialogFooter className="flex-shrink-0 pt-4 border-t">
-                                    {/* Debug validation errors */}
-                                    {!form.formState.isValid && Object.keys(form.formState.errors).length > 0 && (
-                                        <div className="w-full mb-4 p-3 bg-destructive/10 border border-destructive/20 rounded-md">
-                                            <p className="text-sm font-medium text-destructive mb-2">Errores de validación:</p>
-                                            <ul className="text-xs text-destructive space-y-1">
-                                                {Object.entries(form.formState.errors).map(([field, error]) => (
-                                                    <li key={field}>
-                                                        <strong>{field}:</strong> {error?.message || 'Error de validación'}
-                                                    </li>
-                                                ))}
+                                {/* Debug validation errors - moved outside footer for better visibility */}
+                                {(!form.formState.isValid || Object.keys(form.formState.errors).length > 0) && (
+                                    <div className="w-full mb-4 p-3 bg-destructive/10 border border-destructive/20 rounded-md">
+                                        <p className="text-sm font-medium text-destructive mb-2">
+                                            Estado del formulario: {form.formState.isValid ? '✅ Válido' : '❌ Inválido'}
+                                        </p>
+                                        
+                                        {/* Show current form values for debugging */}
+                                        <div className="mb-3 text-xs">
+                                            <p className="font-medium mb-1">Valores actuales:</p>
+                                            <ul className="space-y-1 text-muted-foreground">
+                                                <li>month: {form.watch('month') || 'vacío'}</li>
+                                                <li>dateRange.from: {form.watch('dateRange.from')?.toLocaleDateString() || 'vacío'}</li>
+                                                <li>dateRange.to: {form.watch('dateRange.to')?.toLocaleDateString() || 'vacío'}</li>
+                                                <li>nominationEndDate: {form.watch('nominationEndDate')?.toLocaleDateString() || 'vacío'}</li>
+                                                <li>votingEndDate: {form.watch('votingEndDate')?.toLocaleDateString() || 'vacío'}</li>
+                                                <li>evaluationEndDate: {form.watch('evaluationEndDate')?.toLocaleDateString() || 'vacío'}</li>
+                                                <li>surveyQuestions: {form.watch('surveyQuestions')?.length || 0} preguntas</li>
                                             </ul>
                                         </div>
-                                    )}
+
+                                        {Object.keys(form.formState.errors).length > 0 && (
+                                            <>
+                                                <p className="text-sm font-medium text-destructive mb-2">Errores de validación:</p>
+                                                <ul className="text-xs text-destructive space-y-1">
+                                                    {Object.entries(form.formState.errors).map(([field, error]) => (
+                                                        <li key={field}>
+                                                            <strong>{field}:</strong> {error?.message || 'Error de validación'}
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </>
+                                        )}
+                                        
+                                        <div className="mt-2 text-xs text-muted-foreground">
+                                            <p>Campos requeridos: month, dateRange, nominationEndDate, votingEndDate, evaluationEndDate, surveyQuestions</p>
+                                            <p className="mt-1">Reglas de fechas: nominationEndDate ≤ votingEndDate ≤ evaluationEndDate ≤ dateRange.to</p>
+                                        </div>
+                                    </div>
+                                )}
+
+                                <DialogFooter className="flex-shrink-0 pt-4 border-t">
                                     
                                     <Button 
                                         type="button" 
@@ -1043,7 +1071,7 @@ export function VotingEvents() {
                         </DropdownMenuItem>
                         <DropdownMenuItem onSelect={() => handleSurveyAction(event)}>
                             <Star className="mr-2 h-4 w-4"/>
-                            Agregar Puntos de Encuesta
+                            Visualizador de Puntos de Encuesta
                         </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
@@ -1210,7 +1238,7 @@ export function VotingEvents() {
         <Dialog open={surveyDialogOpen} onOpenChange={setSurveyDialogOpen}>
             <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>Agregar Puntos de Encuesta</DialogTitle>
+                    <DialogTitle>Visualizador de Puntos de Encuesta</DialogTitle>
                     <DialogDescription>
                         Selecciona un departamento y evalúa a los candidatos nominados para el evento "{selectedEvent?.month}".
                     </DialogDescription>
