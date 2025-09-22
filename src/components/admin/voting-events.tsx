@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { votingEvents as initialVotingEvents, departments } from "@/lib/data";
-import type { VotingEvent, Department } from "@/lib/types";
+import { votingEventService, auditLogService, nominationService, voteService, surveyEvaluationService, userService, departmentService } from "@/lib/firebase-service";
+import { useAuth } from "@/context/auth-context";
+import type { VotingEvent, EventDepartment, Nomination, Vote, SurveyEvaluation, User, Department } from "@/models";
+import { Timestamp } from "firebase/firestore";
 import {
   Table,
   TableBody,
@@ -13,7 +15,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Pencil, PlusCircle, Calendar as CalendarIcon } from "lucide-react";
+import { MoreHorizontal, Pencil, PlusCircle, Calendar as CalendarIcon, Users, Vote as VoteIcon, Star, X, Plus } from "lucide-react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -44,6 +46,8 @@ import { format, addDays } from "date-fns";
 import { es } from 'date-fns/locale';
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Slider } from "@/components/ui/slider";
 
 const surveyQuestionSchema = z.object({
     title: z.string().min(1, "El título de la pregunta es requerido."),
@@ -52,8 +56,10 @@ const surveyQuestionSchema = z.object({
 
 const eventFormSchema = z.object({
     id: z.string().optional(),
-    month: z.string().min(1, "El nombre del evento es requerido."),
-    department: z.string().min(1, "El departamento es requerido."),
+    month: z.string()
+        .min(3, "El nombre del evento debe tener al menos 3 caracteres.")
+        .max(50, "El nombre del evento no puede exceder 50 caracteres.")
+        .regex(/^[a-zA-ZÀ-ÿ0-9\s]+$/, "El nombre solo puede contener letras, números y espacios."),
     dateRange: z.object({
         from: z.date({ required_error: "La fecha de inicio del evento es requerida."}),
         to: z.date({ required_error: "La fecha de fin del evento es requerida."}),
@@ -62,6 +68,7 @@ const eventFormSchema = z.object({
     votingEndDate: z.date({ required_error: "La fecha de fin de votación es requerida."}),
     evaluationEndDate: z.date({ required_error: "La fecha de fin de evaluación es requerida."}),
     surveyQuestions: z.array(surveyQuestionSchema).length(5, "Debes proporcionar exactamente 5 preguntas de encuesta."),
+    winnerMessage: z.string().optional(),
 }).refine(data => data.dateRange.to > data.dateRange.from, {
     message: "La fecha de fin debe ser posterior a la fecha de inicio.",
     path: ["dateRange"],
@@ -86,7 +93,6 @@ type EventFormValues = z.infer<typeof eventFormSchema>;
 
 const defaultFormValues: EventFormValues = {
     month: "",
-    department: "",
     dateRange: {
         from: new Date(),
         to: addDays(new Date(), 20),
@@ -101,30 +107,72 @@ const defaultFormValues: EventFormValues = {
         { title: 'Resolución de Problemas y Resiliencia', body: '¿Cuán efectiva es esta persona para superar desafíos y encontrar soluciones?' },
         { title: 'Impacto y Contribución', body: '¿Cuál ha sido la contribución o impacto más significativo de esta persona este mes?' }
     ],
+    winnerMessage: "",
 }
 
 
 export function VotingEvents() {
     const [open, setOpen] = useState(false);
     const [editingEvent, setEditingEvent] = useState<VotingEvent | null>(null);
-    const [votingEvents, setVotingEvents] = useState(initialVotingEvents);
+    const [votingEvents, setVotingEvents] = useState<VotingEvent[]>([]);
+    const [departments, setDepartments] = useState<Department[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    
+    // New action dialogs state
+    const [nominationDialogOpen, setNominationDialogOpen] = useState(false);
+    const [votingDialogOpen, setVotingDialogOpen] = useState(false);
+    const [surveyDialogOpen, setSurveyDialogOpen] = useState(false);
+    const [selectedEvent, setSelectedEvent] = useState<VotingEvent | null>(null);
+    const [selectedDepartment, setSelectedDepartment] = useState<string>("");
+    const [departmentUsers, setDepartmentUsers] = useState<User[]>([]);
+    const [nominations, setNominations] = useState<Nomination[]>([]);
+    const [selectedNominees, setSelectedNominees] = useState<string[]>([]);
+    const [surveyScores, setSurveyScores] = useState<Record<string, number[]>>({});
+    
     const { toast } = useToast();
+    const { currentUser } = useAuth();
 
     const form = useForm<EventFormValues>({
         resolver: zodResolver(eventFormSchema),
         defaultValues: defaultFormValues,
     });
+
+    // Load voting events from Firebase
+    useEffect(() => {
+        loadVotingEvents();
+    }, []);
+
+    const loadVotingEvents = async () => {
+        try {
+            setLoading(true);
+            const [firebaseEvents, departmentsData] = await Promise.all([
+                votingEventService.getAll(),
+                departmentService.getActiveOnly()
+            ]);
+            setVotingEvents(firebaseEvents);
+            setDepartments(departmentsData);
+        } catch (error) {
+            console.error('Error loading voting events:', error);
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "No se pudieron cargar los eventos de votación.",
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
     
     useEffect(() => {
         if (open && editingEvent) {
             const dateRange = {
-                from: editingEvent.startDate || new Date(),
-                to: editingEvent.endDate || addDays(new Date(), 20),
+                from: editingEvent.startDate?.toDate() || new Date(),
+                to: editingEvent.endDate?.toDate() || addDays(new Date(), 20),
             };
             form.reset({
                 ...editingEvent,
                 month: editingEvent.month || "",
-                department: editingEvent.department || "",
                 dateRange,
                 nominationEndDate: addDays(dateRange.from, 7),
                 votingEndDate: addDays(dateRange.from, 14),
@@ -138,30 +186,183 @@ export function VotingEvents() {
     }, [open, editingEvent, form]);
 
 
-    function onSubmit(data: EventFormValues) {
-        const isEditing = !!editingEvent;
+    async function onSubmit(data: EventFormValues) {
+        if (isSubmitting) return; // Prevent double submission
         
-        const eventData: VotingEvent = {
-            id: editingEvent?.id || `event-${Date.now()}`,
-            month: data.month,
-            department: data.department as Department | "All Departments",
-            startDate: data.dateRange.from,
-            endDate: data.dateRange.to,
-            status: editingEvent?.status || "Pending",
-            surveyQuestions: data.surveyQuestions,
-        };
+        try {
+            setIsSubmitting(true);
+            const isEditing = !!editingEvent;
+            
+            // Validate dates
+            if (data.dateRange.from >= data.dateRange.to) {
+                toast({
+                    variant: "destructive",
+                    title: "Error de Validación",
+                    description: "La fecha de fin debe ser posterior a la fecha de inicio.",
+                });
+                return;
+            }
 
-        setVotingEvents(prev => 
-            isEditing
-                ? prev.map(e => e.id === editingEvent!.id ? { ...e, ...eventData } : e)
-                : [...prev, eventData]
-        );
+            if (data.nominationEndDate > data.votingEndDate || data.votingEndDate > data.evaluationEndDate) {
+                toast({
+                    variant: "destructive",
+                    title: "Error de Validación",
+                    description: "Las fechas de las fases deben estar en orden cronológico.",
+                });
+                return;
+            }
 
-        toast({
-            title: isEditing ? "¡Evento Actualizado!" : "¡Evento Creado!",
-            description: `El evento "${data.month}" para ${data.department} ha sido ${isEditing ? 'actualizado' : 'programado'}.`,
-        });
-        setOpen(false);
+            // Check for existing events with same name
+            if (!isEditing) {
+                const existingEvent = votingEvents.find(e => 
+                    e.month.toLowerCase().trim() === data.month.toLowerCase().trim()
+                );
+                if (existingEvent) {
+                    toast({
+                        variant: "destructive",
+                        title: "Error de Validación",
+                        description: "Ya existe un evento con este nombre.",
+                    });
+                    return;
+                }
+            }
+            
+            if (isEditing && editingEvent) {
+                // For editing, update the single event
+                const eventData = {
+                    month: data.month.trim(),
+                    department: editingEvent.department,
+                    startDate: Timestamp.fromDate(data.dateRange.from),
+                    endDate: Timestamp.fromDate(data.dateRange.to),
+                    nominationEndDate: Timestamp.fromDate(data.nominationEndDate),
+                    votingEndDate: Timestamp.fromDate(data.votingEndDate),
+                    evaluationEndDate: Timestamp.fromDate(data.evaluationEndDate),
+                    status: editingEvent.status,
+                    surveyQuestions: data.surveyQuestions.map(q => ({
+                        title: q.title.trim(),
+                        body: q.body.trim()
+                    })),
+                    createdBy: currentUser?.id,
+                    winnerMessage: data.winnerMessage?.trim() || undefined
+                };
+
+                await votingEventService.update(editingEvent.id, eventData);
+                
+                // Log the action
+                if (currentUser) {
+                    await auditLogService.logAction(
+                        currentUser.id,
+                        currentUser.name,
+                        'Editar Evento',
+                        { 
+                            eventId: editingEvent.id, 
+                            eventName: data.month, 
+                            department: editingEvent.department,
+                            changes: Object.keys(eventData)
+                        },
+                        { 
+                            resourceId: editingEvent.id, 
+                            resourceType: 'event', 
+                            severity: 'medium',
+                            success: true
+                        }
+                    );
+                }
+            } else {
+                // For creating new events, create one for each department
+                const createdEventIds: string[] = [];
+                
+                for (const department of departments) {
+                    const eventData = {
+                        month: data.month.trim(),
+                        department: department.name as EventDepartment,
+                        startDate: Timestamp.fromDate(data.dateRange.from),
+                        endDate: Timestamp.fromDate(data.dateRange.to),
+                        nominationEndDate: Timestamp.fromDate(data.nominationEndDate),
+                        votingEndDate: Timestamp.fromDate(data.votingEndDate),
+                        evaluationEndDate: Timestamp.fromDate(data.evaluationEndDate),
+                        status: "Pending" as const,
+                        surveyQuestions: data.surveyQuestions.map(q => ({
+                            title: q.title.trim(),
+                            body: q.body.trim()
+                        })),
+                        createdBy: currentUser?.id,
+                        winnerMessage: data.winnerMessage?.trim() || undefined
+                    };
+
+                    const eventId = await votingEventService.create(eventData);
+                    createdEventIds.push(eventId);
+                }
+                
+                // Log the action for all created events
+                if (currentUser) {
+                    await auditLogService.logAction(
+                        currentUser.id,
+                        currentUser.name,
+                        'Crear Eventos',
+                        { 
+                            eventIds: createdEventIds, 
+                            eventName: data.month, 
+                            departments: departments,
+                            startDate: data.dateRange.from.toISOString(),
+                            endDate: data.dateRange.to.toISOString()
+                        },
+                        { 
+                            resourceId: createdEventIds[0], 
+                            resourceType: 'event', 
+                            severity: 'medium',
+                            success: true
+                        }
+                    );
+                }
+            }
+
+            // Reload events to get the updated list
+            await loadVotingEvents();
+
+            toast({
+                title: isEditing ? "¡Evento Actualizado Exitosamente!" : "¡Eventos Creados Exitosamente!",
+                description: isEditing 
+                    ? `El evento "${data.month}" ha sido actualizado correctamente.`
+                    : `Los eventos "${data.month}" han sido programados para todos los departamentos.`,
+            });
+            
+            // Reset form and close dialog
+            form.reset(defaultFormValues);
+            setEditingEvent(null);
+            setOpen(false);
+            
+        } catch (error: any) {
+            console.error('Error saving voting event:', error);
+            
+            // Log failed action
+            if (currentUser) {
+                await auditLogService.logAction(
+                    currentUser.id,
+                    currentUser.name,
+                    editingEvent ? 'Editar Evento' : 'Crear Eventos',
+                    { 
+                        attemptedEventName: data.month,
+                        error: error.message
+                    },
+                    { 
+                        resourceId: editingEvent?.id,
+                        resourceType: 'event', 
+                        severity: 'high',
+                        success: false,
+                        errorMessage: error.message
+                    }
+                );
+            }
+            
+            toast({
+                variant: "destructive",
+                title: `Error al ${editingEvent ? 'Actualizar' : 'Crear'} Evento`,
+                description: error.message || `No se pudo ${editingEvent ? 'actualizar' : 'crear'} el evento. Inténtalo de nuevo.`,
+            });
+        } finally {
+            setIsSubmitting(false);
+        }
     }
     
     const handleEdit = (event: VotingEvent) => {
@@ -174,6 +375,274 @@ export function VotingEvents() {
         form.reset(defaultFormValues);
         setOpen(true);
     }
+
+    // Load users by department
+    const loadDepartmentUsers = async (department: string) => {
+        try {
+            const users = await userService.getByDepartment(department);
+            setDepartmentUsers(users);
+        } catch (error) {
+            console.error('Error loading department users:', error);
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "No se pudieron cargar los usuarios del departamento.",
+            });
+        }
+    };
+
+    // Load nominations for an event
+    const loadNominations = async (eventId: string) => {
+        try {
+            const eventNominations = await nominationService.getByEvent(eventId);
+            setNominations(eventNominations);
+        } catch (error) {
+            console.error('Error loading nominations:', error);
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "No se pudieron cargar las nominaciones.",
+            });
+        }
+    };
+
+    // Handle nomination action
+    const handleNominationAction = (event: VotingEvent) => {
+        setSelectedEvent(event);
+        setSelectedDepartment("");
+        setDepartmentUsers([]);
+        setNominations([]);
+        setNominationDialogOpen(true);
+    };
+
+    // Handle voting action
+    const handleVotingAction = (event: VotingEvent) => {
+        setSelectedEvent(event);
+        setSelectedDepartment("");
+        setDepartmentUsers([]);
+        setNominations([]);
+        setSelectedNominees([]);
+        setVotingDialogOpen(true);
+    };
+
+    // Handle survey action
+    const handleSurveyAction = (event: VotingEvent) => {
+        setSelectedEvent(event);
+        setSelectedDepartment("");
+        setDepartmentUsers([]);
+        setNominations([]);
+        setSurveyScores({});
+        setSurveyDialogOpen(true);
+    };
+
+    // Handle department selection for actions
+    const handleDepartmentSelect = async (department: string) => {
+        setSelectedDepartment(department);
+        if (selectedEvent) {
+            await loadDepartmentUsers(department);
+            await loadNominations(selectedEvent.id);
+        }
+    };
+
+    // Handle nomination submission
+    const handleNominationSubmit = async () => {
+        if (!selectedEvent || !selectedDepartment || !currentUser) return;
+
+        try {
+            setIsSubmitting(true);
+            
+            // Get current nominations for this event and department
+            const currentNominations = nominations.filter(nom => 
+                nom.eventId === selectedEvent.id && 
+                departmentUsers.some(user => user.id === nom.collaboratorId && user.department === selectedDepartment)
+            );
+
+            // Get selected user IDs
+            const selectedUserIds = selectedNominees;
+            
+            // Find nominations to remove (currently nominated but not selected)
+            const nominationsToRemove = currentNominations.filter(nom => 
+                !selectedUserIds.includes(nom.collaboratorId)
+            );
+
+            // Find new nominations to add (selected but not currently nominated)
+            const currentlyNominatedIds = currentNominations.map(nom => nom.collaboratorId);
+            const nominationsToAdd = selectedUserIds.filter(userId => 
+                !currentlyNominatedIds.includes(userId)
+            );
+
+            // Add new nominations
+            for (const userId of nominationsToAdd) {
+                await nominationService.create({
+                    eventId: selectedEvent.id,
+                    collaboratorId: userId,
+                    nominatedById: currentUser.id,
+                    nominationDate: Timestamp.now(),
+                    department: selectedDepartment,
+                    isActive: true
+                });
+            }
+
+            // Remove old nominations (mark as inactive)
+            // Note: We don't actually delete, just mark as inactive
+            // This would require an update method in nominationService
+
+            await auditLogService.logAction(
+                currentUser.id,
+                currentUser.name,
+                'Gestionar Nominaciones',
+                {
+                    eventId: selectedEvent.id,
+                    department: selectedDepartment,
+                    added: nominationsToAdd.length,
+                    removed: nominationsToRemove.length
+                },
+                {
+                    resourceId: selectedEvent.id,
+                    resourceType: 'event',
+                    severity: 'medium',
+                    success: true
+                }
+            );
+
+            toast({
+                title: "¡Nominaciones Actualizadas!",
+                description: `Se actualizaron las nominaciones para ${selectedDepartment}.`,
+            });
+
+            setNominationDialogOpen(false);
+            
+        } catch (error: any) {
+            console.error('Error managing nominations:', error);
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "No se pudieron actualizar las nominaciones.",
+            });
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    // Handle voting submission
+    const handleVotingSubmit = async () => {
+        if (!selectedEvent || !selectedDepartment || !currentUser || selectedNominees.length === 0) return;
+
+        try {
+            setIsSubmitting(true);
+
+            await voteService.create({
+                eventId: selectedEvent.id,
+                voterId: currentUser.id,
+                votedForIds: selectedNominees,
+                voteDate: Timestamp.now(),
+                voterDepartment: currentUser.department,
+                isValid: true
+            });
+
+            await auditLogService.logAction(
+                currentUser.id,
+                currentUser.name,
+                'Agregar Votos',
+                {
+                    eventId: selectedEvent.id,
+                    department: selectedDepartment,
+                    votedFor: selectedNominees.length
+                },
+                {
+                    resourceId: selectedEvent.id,
+                    resourceType: 'event',
+                    severity: 'medium',
+                    success: true
+                }
+            );
+
+            toast({
+                title: "¡Votos Registrados!",
+                description: `Se registraron los votos para ${selectedDepartment}.`,
+            });
+
+            setVotingDialogOpen(false);
+            
+        } catch (error: any) {
+            console.error('Error adding votes:', error);
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "No se pudieron registrar los votos.",
+            });
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    // Handle survey submission
+    const handleSurveySubmit = async () => {
+        if (!selectedEvent || !selectedDepartment || !currentUser || Object.keys(surveyScores).length === 0) return;
+
+        try {
+            setIsSubmitting(true);
+
+            // Submit evaluations for each nominated user
+            for (const [userId, scores] of Object.entries(surveyScores)) {
+                await surveyEvaluationService.create({
+                    eventId: selectedEvent.id,
+                    evaluatorId: currentUser.id,
+                    evaluatedUserId: userId,
+                    scores: scores,
+                    evaluationDate: Timestamp.now(),
+                    evaluatorDepartment: currentUser.department,
+                    evaluatedUserDepartment: selectedDepartment,
+                    isValid: true
+                });
+            }
+
+            await auditLogService.logAction(
+                currentUser.id,
+                currentUser.name,
+                'Agregar Puntos de Encuesta',
+                {
+                    eventId: selectedEvent.id,
+                    department: selectedDepartment,
+                    evaluationsCount: Object.keys(surveyScores).length
+                },
+                {
+                    resourceId: selectedEvent.id,
+                    resourceType: 'event',
+                    severity: 'medium',
+                    success: true
+                }
+            );
+
+            toast({
+                title: "¡Evaluaciones Registradas!",
+                description: `Se registraron las evaluaciones para ${selectedDepartment}.`,
+            });
+
+            setSurveyDialogOpen(false);
+            
+        } catch (error: any) {
+            console.error('Error adding survey evaluations:', error);
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "No se pudieron registrar las evaluaciones.",
+            });
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    // Handle survey score change
+    const handleSurveyScoreChange = (userId: string, questionIndex: number, value: number[]) => {
+        setSurveyScores(prev => ({
+            ...prev,
+            [userId]: (prev[userId] || Array(selectedEvent?.surveyQuestions?.length || 5).fill(5)).map((score, index) => 
+                index === questionIndex ? value[0] : score
+            )
+        }));
+    };
+
 
 
   return (
@@ -190,13 +659,13 @@ export function VotingEvents() {
                     <DialogHeader className="flex-shrink-0">
                         <DialogTitle>{editingEvent ? 'Editar' : 'Crear Nuevo'} Evento de Votación</DialogTitle>
                         <DialogDescription>
-                           {editingEvent ? 'Actualiza los detalles del evento a continuación.' : 'Define los parámetros y el cronograma para el nuevo evento de votación.'}
+                           {editingEvent ? 'Actualiza los detalles del evento a continuación.' : 'Define los parámetros y el cronograma para el nuevo evento de votación. Se creará automáticamente para todos los departamentos.'}
                         </DialogDescription>
                     </DialogHeader>
                     <div className="flex-grow overflow-y-auto pr-6 -mr-6">
                         <Form {...form}>
                             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-4">
                                     <FormField
                                         control={form.control}
                                         name="month"
@@ -206,29 +675,9 @@ export function VotingEvents() {
                                                 <FormControl>
                                                     <Input placeholder="ej., Agosto 2024" {...field} />
                                                 </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <FormField
-                                        control={form.control}
-                                        name="department"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Departamento</FormLabel>
-                                                <Select onValueChange={field.onChange} value={field.value}>
-                                                    <FormControl>
-                                                        <SelectTrigger>
-                                                            <SelectValue placeholder="Selecciona un departamento" />
-                                                        </SelectTrigger>
-                                                    </FormControl>
-                                                    <SelectContent>
-                                                        <SelectItem value="All Departments">Todos los Departamentos</SelectItem>
-                                                        {departments.map(dep => (
-                                                            <SelectItem key={dep} value={dep}>{dep}</SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
+                                                <FormDescription>
+                                                    Este evento se creará automáticamente para todos los departamentos.
+                                                </FormDescription>
                                                 <FormMessage />
                                             </FormItem>
                                         )}
@@ -396,6 +845,29 @@ export function VotingEvents() {
                                     />
                                 </div>
 
+                                <div className="space-y-4 border-t pt-4">
+                                    <FormField
+                                        control={form.control}
+                                        name="winnerMessage"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Mensaje para el Ganador (Opcional)</FormLabel>
+                                                <FormControl>
+                                                    <Textarea 
+                                                        placeholder="Escribe un mensaje personalizado para mostrar con los resultados del ganador..."
+                                                        disabled={isSubmitting}
+                                                        {...field} 
+                                                    />
+                                                </FormControl>
+                                                <FormDescription>
+                                                    Este mensaje se mostrará junto con los resultados del evento.
+                                                </FormDescription>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+
                                 <div className="space-y-6 border-t pt-4">
                                     <FormLabel>Preguntas de la Encuesta</FormLabel>
                                     <FormDescription>Define las 5 preguntas para la encuesta de evaluación de pares.</FormDescription>
@@ -409,7 +881,7 @@ export function VotingEvents() {
                                                     render={({ field }) => (
                                                         <FormItem>
                                                             <FormLabel className="font-normal text-muted-foreground text-xs">Título</FormLabel>
-                                                            <FormControl><Input placeholder="ej., Trabajo en Equipo" {...field} /></FormControl>
+                                                            <FormControl><Input placeholder="ej., Trabajo en Equipo" disabled={isSubmitting} {...field} /></FormControl>
                                                             <FormMessage />
                                                         </FormItem>
                                                     )}
@@ -420,7 +892,7 @@ export function VotingEvents() {
                                                     render={({ field }) => (
                                                         <FormItem>
                                                              <FormLabel className="font-normal text-muted-foreground text-xs">Cuerpo de la Pregunta</FormLabel>
-                                                            <FormControl><Textarea placeholder="Introduce la pregunta completa para la encuesta..." {...field} /></FormControl>
+                                                            <FormControl><Textarea placeholder="Introduce la pregunta completa para la encuesta..." disabled={isSubmitting} {...field} /></FormControl>
                                                              <FormMessage />
                                                         </FormItem>
                                                     )}
@@ -432,8 +904,39 @@ export function VotingEvents() {
                                 </div>
                                 
                                 <DialogFooter className="flex-shrink-0 pt-4 border-t">
-                                    <Button type="button" variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button>
-                                    <Button type="submit">{editingEvent ? 'Guardar Cambios' : 'Crear Evento'}</Button>
+                                    <Button 
+                                        type="button" 
+                                        variant="ghost" 
+                                        onClick={() => setOpen(false)}
+                                        disabled={isSubmitting}
+                                    >
+                                        Cancelar
+                                    </Button>
+                                    <Button 
+                                        type="submit" 
+                                        disabled={isSubmitting || !form.formState.isValid}
+                                    >
+                                        {isSubmitting ? (
+                                            <>
+                                                <div className="h-4 w-4 animate-spin rounded-full border-2 border-solid border-current border-t-transparent mr-2"></div>
+                                                {editingEvent ? 'Actualizando...' : 'Creando...'}
+                                            </>
+                                        ) : (
+                                            <>
+                                                {editingEvent ? (
+                                                    <>
+                                                        <Pencil className="mr-2 h-4 w-4" />
+                                                        Guardar Cambios
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <PlusCircle className="mr-2 h-4 w-4" />
+                                                        Crear Evento
+                                                    </>
+                                                )}
+                                            </>
+                                        )}
+                                    </Button>
                                 </DialogFooter>
                             </form>
                         </Form>
@@ -444,51 +947,327 @@ export function VotingEvents() {
         <Table>
         <TableHeader>
             <TableRow>
-            <TableHead>Mes</TableHead>
+            <TableHead>Evento</TableHead>
             <TableHead>Departamento</TableHead>
             <TableHead>Estado</TableHead>
+            <TableHead>Fechas</TableHead>
             <TableHead>
                 <span className="sr-only">Acciones</span>
             </TableHead>
             </TableRow>
         </TableHeader>
         <TableBody>
-            {votingEvents.map((event) => (
-            <TableRow key={event.id}>
-                <TableCell className="font-medium">{event.month}</TableCell>
-                <TableCell>{event.department ?? 'Todos los Departamentos'}</TableCell>
-                <TableCell>
-                <Badge
-                    className={cn({
-                        "bg-green-500/20 text-green-700 hover:bg-green-500/30 dark:bg-green-500/10 dark:text-green-400": event.status === 'Active',
-                        "bg-yellow-500/20 text-yellow-700 hover:bg-yellow-500/30 dark:bg-yellow-500/10 dark:text-yellow-400": event.status === 'Pending',
-                        "bg-red-500/20 text-red-700 hover:bg-red-500/30 dark:bg-red-500/10 dark:text-red-400": event.status === 'Closed',
-                    })}
-                >{event.status === 'Active' ? 'Activo' : event.status === 'Pending' ? 'Pendiente' : 'Cerrado'}</Badge>
-                </TableCell>
-                <TableCell>
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                    <Button aria-haspopup="true" size="icon" variant="ghost">
-                        <MoreHorizontal className="h-4 w-4" />
-                        <span className="sr-only">Menú</span>
-                    </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                    <DropdownMenuItem onSelect={() => handleEdit(event)}><Pencil className="mr-2 h-4 w-4"/>Editar Evento</DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-                </TableCell>
-            </TableRow>
-            ))}
+            {loading ? (
+                <TableRow>
+                    <TableCell colSpan={5} className="text-center py-8">
+                        <div className="flex items-center justify-center">
+                            <div className="h-6 w-6 animate-spin rounded-full border-2 border-solid border-primary border-t-transparent mr-2"></div>
+                            Cargando eventos...
+                        </div>
+                    </TableCell>
+                </TableRow>
+            ) : votingEvents.length === 0 ? (
+                <TableRow>
+                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                        No hay eventos de votación registrados
+                    </TableCell>
+                </TableRow>
+            ) : (
+                votingEvents.map((event) => (
+                <TableRow key={event.id}>
+                    <TableCell className="font-medium">{event.month}</TableCell>
+                    <TableCell>
+                        <Badge variant="outline">
+                            {event.department}
+                        </Badge>
+                    </TableCell>
+                    <TableCell>
+                    <Badge
+                        className={cn({
+                            "bg-green-500/20 text-green-700 hover:bg-green-500/30 dark:bg-green-500/10 dark:text-green-400": event.status === 'Active',
+                            "bg-yellow-500/20 text-yellow-700 hover:bg-yellow-500/30 dark:bg-yellow-500/10 dark:text-yellow-400": event.status === 'Pending',
+                            "bg-red-500/20 text-red-700 hover:bg-red-500/30 dark:bg-red-500/10 dark:text-red-400": event.status === 'Closed',
+                        })}
+                    >{event.status === 'Active' ? 'Activo' : event.status === 'Pending' ? 'Pendiente' : 'Cerrado'}</Badge>
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                        {event.startDate && event.endDate ? (
+                            `${format(event.startDate.toDate(), "dd/MM/yy", { locale: es })} - ${format(event.endDate.toDate(), "dd/MM/yy", { locale: es })}`
+                        ) : (
+                            'Sin fechas'
+                        )}
+                    </TableCell>
+                    <TableCell>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                        <Button aria-haspopup="true" size="icon" variant="ghost">
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Menú</span>
+                        </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                        <DropdownMenuItem onSelect={() => handleEdit(event)}>
+                            <Pencil className="mr-2 h-4 w-4"/>
+                            Editar Evento
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => handleNominationAction(event)}>
+                            <Users className="mr-2 h-4 w-4"/>
+                            Gestionar Nominaciones
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => handleVotingAction(event)}>
+                            <VoteIcon className="mr-2 h-4 w-4"/>
+                            Agregar Votos
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => handleSurveyAction(event)}>
+                            <Star className="mr-2 h-4 w-4"/>
+                            Agregar Puntos de Encuesta
+                        </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                    </TableCell>
+                </TableRow>
+                ))
+            )}
         </TableBody>
         </Table>
+
+
         <div className="space-y-2 pt-4 border-t">
             <Label htmlFor="message" className="font-semibold">Mensaje Atractivo para el Anuncio del Ganador</Label>
             <Textarea id="message" placeholder="Escribe un mensaje divertido y atractivo para mostrar con los resultados..." />
             <Button>Guardar Mensaje</Button>
         </div>
+
+        {/* Nomination Management Dialog */}
+        <Dialog open={nominationDialogOpen} onOpenChange={setNominationDialogOpen}>
+            <DialogContent className="sm:max-w-2xl">
+                <DialogHeader>
+                    <DialogTitle>Gestionar Nominaciones</DialogTitle>
+                    <DialogDescription>
+                        Selecciona un departamento y gestiona las nominaciones para el evento "{selectedEvent?.month}".
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                    <div>
+                        <Label htmlFor="department-select">Departamento</Label>
+                        <Select value={selectedDepartment} onValueChange={handleDepartmentSelect}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Selecciona un departamento" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {departments.map((dept) => (
+                                    <SelectItem key={dept.name} value={dept.name}>{dept.displayName}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    
+                    {selectedDepartment && departmentUsers.length > 0 && (
+                        <div>
+                            <Label>Usuarios del Departamento</Label>
+                            <div className="space-y-2 max-h-60 overflow-y-auto border rounded-md p-3">
+                                {departmentUsers.map((user) => {
+                                    const isNominated = nominations.some(nom => nom.collaboratorId === user.id);
+                                    return (
+                                        <div key={user.id} className="flex items-center space-x-2">
+                                            <Checkbox
+                                                id={user.id}
+                                                checked={selectedNominees.includes(user.id)}
+                                                onCheckedChange={(checked) => {
+                                                    if (checked) {
+                                                        setSelectedNominees(prev => [...prev, user.id]);
+                                                    } else {
+                                                        setSelectedNominees(prev => prev.filter(id => id !== user.id));
+                                                    }
+                                                }}
+                                            />
+                                            <Label htmlFor={user.id} className="flex-1">
+                                                {user.name}
+                                                {isNominated && <Badge variant="secondary" className="ml-2">Nominado</Badge>}
+                                            </Label>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => setNominationDialogOpen(false)}>
+                        Cancelar
+                    </Button>
+                    <Button 
+                        onClick={handleNominationSubmit} 
+                        disabled={isSubmitting || !selectedDepartment}
+                    >
+                        {isSubmitting ? "Guardando..." : "Guardar Nominaciones"}
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+
+        {/* Voting Dialog */}
+        <Dialog open={votingDialogOpen} onOpenChange={setVotingDialogOpen}>
+            <DialogContent className="sm:max-w-2xl">
+                <DialogHeader>
+                    <DialogTitle>Agregar Votos</DialogTitle>
+                    <DialogDescription>
+                        Selecciona un departamento y vota por los candidatos nominados para el evento "{selectedEvent?.month}".
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                    <div>
+                        <Label htmlFor="department-select">Departamento</Label>
+                        <Select value={selectedDepartment} onValueChange={handleDepartmentSelect}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Selecciona un departamento" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {departments.map((dept) => (
+                                    <SelectItem key={dept.name} value={dept.name}>{dept.displayName}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    
+                    {selectedDepartment && nominations.length > 0 && (
+                        <div>
+                            <Label>Candidatos Nominados</Label>
+                            <div className="space-y-2 max-h-60 overflow-y-auto border rounded-md p-3">
+                                {nominations
+                                    .filter(nom => departmentUsers.some(user => user.id === nom.collaboratorId))
+                                    .map((nomination) => {
+                                        const user = departmentUsers.find(u => u.id === nomination.collaboratorId);
+                                        if (!user) return null;
+                                        
+                                        return (
+                                            <div key={nomination.id} className="flex items-center space-x-2">
+                                                <Checkbox
+                                                    id={nomination.id}
+                                                    checked={selectedNominees.includes(user.id)}
+                                                    onCheckedChange={(checked) => {
+                                                        if (checked) {
+                                                            setSelectedNominees(prev => [...prev, user.id]);
+                                                        } else {
+                                                            setSelectedNominees(prev => prev.filter(id => id !== user.id));
+                                                        }
+                                                    }}
+                                                />
+                                                <Label htmlFor={nomination.id} className="flex-1">
+                                                    {user.name}
+                                                </Label>
+                                            </div>
+                                        );
+                                    })}
+                            </div>
+                        </div>
+                    )}
+                    
+                    {selectedDepartment && nominations.length === 0 && (
+                        <div className="text-center py-4 text-muted-foreground">
+                            No hay candidatos nominados en este departamento.
+                        </div>
+                    )}
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => setVotingDialogOpen(false)}>
+                        Cancelar
+                    </Button>
+                    <Button 
+                        onClick={handleVotingSubmit} 
+                        disabled={isSubmitting || !selectedDepartment || selectedNominees.length === 0}
+                    >
+                        {isSubmitting ? "Registrando..." : "Registrar Votos"}
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+
+        {/* Survey Evaluation Dialog */}
+        <Dialog open={surveyDialogOpen} onOpenChange={setSurveyDialogOpen}>
+            <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                    <DialogTitle>Agregar Puntos de Encuesta</DialogTitle>
+                    <DialogDescription>
+                        Selecciona un departamento y evalúa a los candidatos nominados para el evento "{selectedEvent?.month}".
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                    <div>
+                        <Label htmlFor="department-select">Departamento</Label>
+                        <Select value={selectedDepartment} onValueChange={handleDepartmentSelect}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Selecciona un departamento" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {departments.map((dept) => (
+                                    <SelectItem key={dept.name} value={dept.name}>{dept.displayName}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    
+                    {selectedDepartment && nominations.length > 0 && selectedEvent?.surveyQuestions && (
+                        <div className="space-y-6">
+                            <Label>Evaluar Candidatos Nominados</Label>
+                            {nominations
+                                .filter(nom => departmentUsers.some(user => user.id === nom.collaboratorId))
+                                .map((nomination) => {
+                                    const user = departmentUsers.find(u => u.id === nomination.collaboratorId);
+                                    if (!user) return null;
+                                    
+                                    const userScores = surveyScores[user.id] || Array(selectedEvent.surveyQuestions.length).fill(5);
+                                    
+                                    return (
+                                        <div key={nomination.id} className="border rounded-lg p-4 space-y-4">
+                                            <h4 className="font-semibold">{user.name}</h4>
+                                            {selectedEvent.surveyQuestions.map((question, index) => (
+                                                <div key={index} className="space-y-2">
+                                                    <Label className="text-sm font-medium">{question.title}</Label>
+                                                    <p className="text-sm text-muted-foreground">{question.body}</p>
+                                                    <div className="flex items-center space-x-4">
+                                                        <span className="text-sm">1</span>
+                                                        <Slider
+                                                            value={[userScores[index]]}
+                                                            onValueChange={(value) => handleSurveyScoreChange(user.id, index, value)}
+                                                            max={10}
+                                                            min={1}
+                                                            step={1}
+                                                            className="flex-1"
+                                                        />
+                                                        <span className="text-sm">10</span>
+                                                        <Badge variant="outline" className="min-w-[3rem] text-center">
+                                                            {userScores[index]}
+                                                        </Badge>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    );
+                                })}
+                        </div>
+                    )}
+                    
+                    {selectedDepartment && nominations.length === 0 && (
+                        <div className="text-center py-4 text-muted-foreground">
+                            No hay candidatos nominados en este departamento.
+                        </div>
+                    )}
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => setSurveyDialogOpen(false)}>
+                        Cancelar
+                    </Button>
+                    <Button 
+                        onClick={handleSurveySubmit} 
+                        disabled={isSubmitting || !selectedDepartment || Object.keys(surveyScores).length === 0}
+                    >
+                        {isSubmitting ? "Registrando..." : "Registrar Evaluaciones"}
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     </div>
   );
 }

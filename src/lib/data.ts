@@ -1,32 +1,37 @@
-import type { User, Department, Role, VotingEvent, Nomination, Vote, AuditLog } from './types';
+import type { User, Department, Role, VotingEvent, Nomination, Vote, AuditLog, NominatedEntry } from './types';
 
-export const departments: Department[] = ["Technology", "Marketing", "Sales", "Human Resources"];
+export const departments: Department[] = ["Transporte", "Gestion de Inventario", "Recursos Humanos"];
 
 export const users: User[] = [
-  { id: 'user-1', name: 'Usuario Admin', email: 'admin@example.com', cedula: '11111111', role: 'Admin', department: 'Technology', avatar: 'https://picsum.photos/id/1/100' },
-  { id: 'user-2', name: 'Sofia Davis', email: 'supervisor.tech@example.com', cedula: '22222222', role: 'Supervisor', department: 'Technology', avatar: 'https://picsum.photos/id/2/100' },
-  { id: 'user-3', name: 'Alex Johnson', email: 'collaborator.tech@example.com', cedula: '33333333', role: 'Collaborator', department: 'Technology', avatar: 'https://picsum.photos/id/3/100' },
-  { id: 'user-4', name: 'Maria Garcia', email: 'coordinator.tech@example.com', cedula: '44444444', role: 'Coordinator', department: 'Technology', avatar: 'https://picsum.photos/id/4/100' },
-  { id: 'user-5', name: 'David Smith', email: 'supervisor.mktg@example.com', cedula: '55555555', role: 'Supervisor', department: 'Marketing', avatar: 'https://picsum.photos/id/5/100' },
-  { id: 'user-6', name: 'Emily White', email: 'collaborator.mktg@example.com', cedula: '66666666', role: 'Collaborator', department: 'Marketing', avatar: 'https://picsum.photos/id/6/100' },
-  { id: 'user-7', name: 'James Brown', email: 'collaborator.tech.2@example.com', cedula: '77777777', role: 'Collaborator', department: 'Technology', avatar: 'https://picsum.photos/id/7/100' },
-  { id: 'user-8', name: 'Linda Miller', email: 'collaborator.tech.3@example.com', cedula: '88888888', role: 'Collaborator', department: 'Technology', avatar: 'https://picsum.photos/id/8/100' },
-  { id: 'user-9', name: 'Casey Jones', email: 'collaborator.tech.4@example.com', cedula: '99999999', role: 'Collaborator', department: 'Technology', avatar: 'https://picsum.photos/id/9/100' },
-  { id: 'user-10', name: 'Jordan Taylor', email: 'collaborator.tech.5@example.com', cedula: '10101010', role: 'Collaborator', department: 'Technology', avatar: 'https://picsum.photos/id/10/100' },
-  { id: 'user-11', name: 'Morgan Lee', email: 'collaborator.tech.6@example.com', cedula: '12121212', role: 'Collaborator', department: 'Technology', avatar: 'https://picsum.photos/id/11/100' },
-  { id: 'user-12', name: 'Taylor Swift', email: 'collaborator.tech.7@example.com', cedula: '13131313', role: 'Collaborator', department: 'Technology', avatar: 'https://picsum.photos/id/12/100' },
-  { id: 'user-13', name: 'Chris Green', email: 'collaborator.mktg.2@example.com', cedula: '14141414', role: 'Collaborator', department: 'Marketing', avatar: 'https://picsum.photos/id/13/100' },
-  { id: 'user-14', name: 'Patricia Hill', email: 'collaborator.mktg.3@example.com', cedula: '15151515', role: 'Collaborator', department: 'Marketing', avatar: 'https://picsum.photos/id/14/100' },
-  { id: 'user-15', name: 'Robert Hall', email: 'supervisor.sales@example.com', cedula: '16161616', role: 'Supervisor', department: 'Sales', avatar: 'https://picsum.photos/id/15/100' },
-  { id: 'user-16', name: 'Jennifer Adams', email: 'collaborator.sales.1@example.com', cedula: '17171717', role: 'Collaborator', department: 'Sales', avatar: 'https://picsum.photos/id/16/100' },
-  { id: 'user-17', name: 'Michael Nelson', email: 'collaborator.sales.2@example.com', cedula: '18181818', role: 'Collaborator', department: 'Sales', avatar: 'https://picsum.photos/id/17/100' },
-  { id: 'user-18', name: 'Barbara Carter', email: 'supervisor.hr@example.com', cedula: '19191919', role: 'Supervisor', department: 'Human Resources', avatar: 'https://picsum.photos/id/18/100' },
-  { id: 'user-19', name: 'William Baker', email: 'collaborator.hr.1@example.com', cedula: '20202020', role: 'Collaborator', department: 'Human Resources', avatar: 'https://picsum.photos/id/19/100' },
-  { id: 'user-20', name: 'Elizabeth Clark', email: 'collaborator.hr.2@example.com', cedula: '21212121', role: 'Collaborator', department: 'Human Resources', avatar: 'https://picsum.photos/id/20/100' },
-  { id: 'user-21', name: 'Joseph Lewis', email: 'coordinator.mktg@example.com', cedula: '23232323', role: 'Coordinator', department: 'Marketing', avatar: 'https://picsum.photos/id/21/100' },
-  { id: 'user-22', name: 'Susan Walker', email: 'coordinator.sales@example.com', cedula: '24242424', role: 'Coordinator', department: 'Sales', avatar: 'https://picsum.photos/id/22/100' },
-  { id: 'user-23', name: 'Thomas Robinson', email: 'coordinator.hr@example.com', cedula: '25252525', role: 'Coordinator', department: 'Human Resources', avatar: 'https://picsum.photos/id/23/100' },
-  { id: 'user-24', name: 'Jessica Wright', email: 'collaborator.sales.3@example.com', cedula: '26262626', role: 'Collaborator', department: 'Sales', avatar: 'https://picsum.photos/id/24/100' }
+  // Admin User
+  { id: 'admin-1', name: 'Carlos Administrador', email: 'admin@soyelmejor.com', cedula: '10000001', role: 'Admin', department: 'Recursos Humanos', avatar: 'https://picsum.photos/id/1/100' },
+  
+  // Departamento de Transporte
+  { id: 'trans-sup-1', name: 'Ana Rodriguez', email: 'ana.rodriguez@soyelmejor.com', cedula: '20001001', role: 'Supervisor', department: 'Transporte', avatar: 'https://picsum.photos/id/2/100' },
+  { id: 'trans-coord-1', name: 'Miguel Santos', email: 'miguel.santos@soyelmejor.com', cedula: '20001002', role: 'Coordinator', department: 'Transporte', avatar: 'https://picsum.photos/id/3/100' },
+  { id: 'trans-col-1', name: 'Luis Fernandez', email: 'luis.fernandez@soyelmejor.com', cedula: '20001003', role: 'Collaborator', department: 'Transporte', avatar: 'https://picsum.photos/id/4/100' },
+  { id: 'trans-col-2', name: 'Carmen Jimenez', email: 'carmen.jimenez@soyelmejor.com', cedula: '20001004', role: 'Collaborator', department: 'Transporte', avatar: 'https://picsum.photos/id/5/100' },
+  { id: 'trans-col-3', name: 'Roberto Morales', email: 'roberto.morales@soyelmejor.com', cedula: '20001005', role: 'Collaborator', department: 'Transporte', avatar: 'https://picsum.photos/id/6/100' },
+  { id: 'trans-col-4', name: 'Sofia Herrera', email: 'sofia.herrera@soyelmejor.com', cedula: '20001006', role: 'Collaborator', department: 'Transporte', avatar: 'https://picsum.photos/id/7/100' },
+  { id: 'trans-col-5', name: 'Diego Vargas', email: 'diego.vargas@soyelmejor.com', cedula: '20001007', role: 'Collaborator', department: 'Transporte', avatar: 'https://picsum.photos/id/8/100' },
+
+  // Departamento de Gestión de Inventario
+  { id: 'inv-sup-1', name: 'Patricia Gonzalez', email: 'patricia.gonzalez@soyelmejor.com', cedula: '20002001', role: 'Supervisor', department: 'Gestion de Inventario', avatar: 'https://picsum.photos/id/9/100' },
+  { id: 'inv-coord-1', name: 'Fernando Castro', email: 'fernando.castro@soyelmejor.com', cedula: '20002002', role: 'Coordinator', department: 'Gestion de Inventario', avatar: 'https://picsum.photos/id/10/100' },
+  { id: 'inv-col-1', name: 'Maria Lopez', email: 'maria.lopez@soyelmejor.com', cedula: '20002003', role: 'Collaborator', department: 'Gestion de Inventario', avatar: 'https://picsum.photos/id/11/100' },
+  { id: 'inv-col-2', name: 'Andres Ruiz', email: 'andres.ruiz@soyelmejor.com', cedula: '20002004', role: 'Collaborator', department: 'Gestion de Inventario', avatar: 'https://picsum.photos/id/12/100' },
+  { id: 'inv-col-3', name: 'Lucia Mendez', email: 'lucia.mendez@soyelmejor.com', cedula: '20002005', role: 'Collaborator', department: 'Gestion de Inventario', avatar: 'https://picsum.photos/id/13/100' },
+  { id: 'inv-col-4', name: 'Javier Ortiz', email: 'javier.ortiz@soyelmejor.com', cedula: '20002006', role: 'Collaborator', department: 'Gestion de Inventario', avatar: 'https://picsum.photos/id/14/100' },
+  { id: 'inv-col-5', name: 'Valentina Torres', email: 'valentina.torres@soyelmejor.com', cedula: '20002007', role: 'Collaborator', department: 'Gestion de Inventario', avatar: 'https://picsum.photos/id/15/100' },
+
+  // Departamento de Recursos Humanos
+  { id: 'rh-sup-1', name: 'Eduardo Martinez', email: 'eduardo.martinez@soyelmejor.com', cedula: '20003001', role: 'Supervisor', department: 'Recursos Humanos', avatar: 'https://picsum.photos/id/16/100' },
+  { id: 'rh-coord-1', name: 'Gabriela Ramirez', email: 'gabriela.ramirez@soyelmejor.com', cedula: '20003002', role: 'Coordinator', department: 'Recursos Humanos', avatar: 'https://picsum.photos/id/17/100' },
+  { id: 'rh-col-1', name: 'Alejandro Silva', email: 'alejandro.silva@soyelmejor.com', cedula: '20003003', role: 'Collaborator', department: 'Recursos Humanos', avatar: 'https://picsum.photos/id/18/100' },
+  { id: 'rh-col-2', name: 'Isabella Flores', email: 'isabella.flores@soyelmejor.com', cedula: '20003004', role: 'Collaborator', department: 'Recursos Humanos', avatar: 'https://picsum.photos/id/19/100' },
+  { id: 'rh-col-3', name: 'Sebastian Diaz', email: 'sebastian.diaz@soyelmejor.com', cedula: '20003005', role: 'Collaborator', department: 'Recursos Humanos', avatar: 'https://picsum.photos/id/20/100' },
+  { id: 'rh-col-4', name: 'Camila Perez', email: 'camila.perez@soyelmejor.com', cedula: '20003006', role: 'Collaborator', department: 'Recursos Humanos', avatar: 'https://picsum.photos/id/21/100' },
+  { id: 'rh-col-5', name: 'Nicolas Gutierrez', email: 'nicolas.gutierrez@soyelmejor.com', cedula: '20003007', role: 'Collaborator', department: 'Recursos Humanos', avatar: 'https://picsum.photos/id/22/100' }
 ];
 
 const defaultSurveyQuestions = [
@@ -38,23 +43,98 @@ const defaultSurveyQuestions = [
 ];
 
 export const votingEvents: VotingEvent[] = [
-    { id: 'event-1', department: 'Technology', status: 'Active', month: 'Julio 2024', startDate: new Date('2024-07-01'), endDate: new Date('2024-07-25'), surveyQuestions: defaultSurveyQuestions },
-    { id: 'event-2', department: 'Marketing', status: 'Pending', month: 'Julio 2024', surveyQuestions: [] },
-    { id: 'event-3', department: 'All Departments', status: 'Closed', month: 'Junio 2024', startDate: new Date('2024-06-01'), endDate: new Date('2024-06-25'), surveyQuestions: defaultSurveyQuestions },
-    { id: 'event-4', department: 'Human Resources', status: 'Closed', month: 'Junio 2024', startDate: new Date('2024-06-01'), endDate: new Date('2024-06-25'), surveyQuestions: defaultSurveyQuestions },
+    { 
+        id: 'event-active-1', 
+        department: 'All Departments', 
+        status: 'Active', 
+        month: 'Diciembre 2024', 
+        startDate: new Date('2024-12-01'), 
+        endDate: new Date('2024-12-21'), 
+        surveyQuestions: defaultSurveyQuestions 
+    },
+    { 
+        id: 'event-closed-1', 
+        department: 'All Departments', 
+        status: 'Closed', 
+        month: 'Noviembre 2024', 
+        startDate: new Date('2024-11-01'), 
+        endDate: new Date('2024-11-21'), 
+        surveyQuestions: defaultSurveyQuestions 
+    }
 ];
 
 export const nominations: Nomination[] = [
-    { id: 'nom-1', eventId: 'event-1', collaboratorId: 'user-3', nominatedById: 'user-2', nominationDate: new Date() },
-    { id: 'nom-2', eventId: 'event-1', collaboratorId: 'user-7', nominatedById: 'user-2', nominationDate: new Date() },
-    { id: 'nom-3', eventId: 'event-3', collaboratorId: 'user-6', nominatedById: 'user-5', nominationDate: new Date('2024-06-05') },
+    // Nominations for Active Event (Diciembre 2024) - Currently in nomination phase
+    { id: 'nom-active-1', eventId: 'event-active-1', collaboratorId: 'trans-col-1', nominatedById: 'trans-sup-1', nominationDate: new Date('2024-12-02') },
+    { id: 'nom-active-2', eventId: 'event-active-1', collaboratorId: 'trans-col-2', nominatedById: 'trans-coord-1', nominationDate: new Date('2024-12-02') },
+    { id: 'nom-active-3', eventId: 'event-active-1', collaboratorId: 'inv-col-1', nominatedById: 'inv-sup-1', nominationDate: new Date('2024-12-03') },
+    { id: 'nom-active-4', eventId: 'event-active-1', collaboratorId: 'inv-col-3', nominatedById: 'inv-coord-1', nominationDate: new Date('2024-12-03') },
+    { id: 'nom-active-5', eventId: 'event-active-1', collaboratorId: 'rh-col-1', nominatedById: 'rh-sup-1', nominationDate: new Date('2024-12-04') },
+    { id: 'nom-active-6', eventId: 'event-active-1', collaboratorId: 'rh-col-2', nominatedById: 'rh-coord-1', nominationDate: new Date('2024-12-04') },
+    
+    // Nominations for Closed Event (Noviembre 2024) - Completed
+    { id: 'nom-closed-1', eventId: 'event-closed-1', collaboratorId: 'trans-col-1', nominatedById: 'trans-sup-1', nominationDate: new Date('2024-11-02') },
+    { id: 'nom-closed-2', eventId: 'event-closed-1', collaboratorId: 'trans-col-3', nominatedById: 'trans-coord-1', nominationDate: new Date('2024-11-02') },
+    { id: 'nom-closed-3', eventId: 'event-closed-1', collaboratorId: 'trans-col-4', nominatedById: 'trans-col-2', nominationDate: new Date('2024-11-03') },
+    { id: 'nom-closed-4', eventId: 'event-closed-1', collaboratorId: 'inv-col-1', nominatedById: 'inv-sup-1', nominationDate: new Date('2024-11-03') },
+    { id: 'nom-closed-5', eventId: 'event-closed-1', collaboratorId: 'inv-col-2', nominatedById: 'inv-coord-1', nominationDate: new Date('2024-11-04') },
+    { id: 'nom-closed-6', eventId: 'event-closed-1', collaboratorId: 'inv-col-5', nominatedById: 'inv-col-3', nominationDate: new Date('2024-11-04') },
+    { id: 'nom-closed-7', eventId: 'event-closed-1', collaboratorId: 'rh-col-1', nominatedById: 'rh-sup-1', nominationDate: new Date('2024-11-05') },
+    { id: 'nom-closed-8', eventId: 'event-closed-1', collaboratorId: 'rh-col-3', nominatedById: 'rh-coord-1', nominationDate: new Date('2024-11-05') },
+    { id: 'nom-closed-9', eventId: 'event-closed-1', collaboratorId: 'rh-col-4', nominatedById: 'rh-col-2', nominationDate: new Date('2024-11-06') },
 ];
 
 export const votes: Vote[] = [
-    { id: 'vote-1', eventId: 'event-3', voterId: 'some-user', votedForIds: ['user-id-in-sales'], voteDate: new Date() }
+    // Votes for Closed Event (Noviembre 2024) - Completed voting
+    { id: 'vote-closed-1', eventId: 'event-closed-1', voterId: 'trans-sup-1', votedForIds: ['trans-col-1', 'inv-col-1', 'rh-col-1'], voteDate: new Date('2024-11-10') },
+    { id: 'vote-closed-2', eventId: 'event-closed-1', voterId: 'trans-coord-1', votedForIds: ['trans-col-3', 'inv-col-2', 'rh-col-3'], voteDate: new Date('2024-11-10') },
+    { id: 'vote-closed-3', eventId: 'event-closed-1', voterId: 'trans-col-1', votedForIds: ['trans-col-4', 'inv-col-1', 'rh-col-4'], voteDate: new Date('2024-11-11') },
+    { id: 'vote-closed-4', eventId: 'event-closed-1', voterId: 'trans-col-2', votedForIds: ['trans-col-1', 'inv-col-5', 'rh-col-1'], voteDate: new Date('2024-11-11') },
+    { id: 'vote-closed-5', eventId: 'event-closed-1', voterId: 'trans-col-3', votedForIds: ['trans-col-1', 'inv-col-1', 'rh-col-3'], voteDate: new Date('2024-11-11') },
+    { id: 'vote-closed-6', eventId: 'event-closed-1', voterId: 'trans-col-4', votedForIds: ['trans-col-1', 'inv-col-2', 'rh-col-1'], voteDate: new Date('2024-11-12') },
+    { id: 'vote-closed-7', eventId: 'event-closed-1', voterId: 'trans-col-5', votedForIds: ['trans-col-3', 'inv-col-1', 'rh-col-4'], voteDate: new Date('2024-11-12') },
+    
+    { id: 'vote-closed-8', eventId: 'event-closed-1', voterId: 'inv-sup-1', votedForIds: ['inv-col-1', 'trans-col-1', 'rh-col-1'], voteDate: new Date('2024-11-10') },
+    { id: 'vote-closed-9', eventId: 'event-closed-1', voterId: 'inv-coord-1', votedForIds: ['inv-col-2', 'trans-col-3', 'rh-col-3'], voteDate: new Date('2024-11-10') },
+    { id: 'vote-closed-10', eventId: 'event-closed-1', voterId: 'inv-col-1', votedForIds: ['inv-col-5', 'trans-col-1', 'rh-col-1'], voteDate: new Date('2024-11-11') },
+    { id: 'vote-closed-11', eventId: 'event-closed-1', voterId: 'inv-col-2', votedForIds: ['inv-col-1', 'trans-col-4', 'rh-col-3'], voteDate: new Date('2024-11-11') },
+    { id: 'vote-closed-12', eventId: 'event-closed-1', voterId: 'inv-col-3', votedForIds: ['inv-col-1', 'trans-col-1', 'rh-col-4'], voteDate: new Date('2024-11-12') },
+    { id: 'vote-closed-13', eventId: 'event-closed-1', voterId: 'inv-col-4', votedForIds: ['inv-col-2', 'trans-col-3', 'rh-col-1'], voteDate: new Date('2024-11-12') },
+    { id: 'vote-closed-14', eventId: 'event-closed-1', voterId: 'inv-col-5', votedForIds: ['inv-col-1', 'trans-col-1', 'rh-col-3'], voteDate: new Date('2024-11-13') },
+    
+    { id: 'vote-closed-15', eventId: 'event-closed-1', voterId: 'rh-sup-1', votedForIds: ['rh-col-1', 'trans-col-1', 'inv-col-1'], voteDate: new Date('2024-11-10') },
+    { id: 'vote-closed-16', eventId: 'event-closed-1', voterId: 'rh-coord-1', votedForIds: ['rh-col-3', 'trans-col-3', 'inv-col-2'], voteDate: new Date('2024-11-10') },
+    { id: 'vote-closed-17', eventId: 'event-closed-1', voterId: 'rh-col-1', votedForIds: ['rh-col-4', 'trans-col-1', 'inv-col-1'], voteDate: new Date('2024-11-11') },
+    { id: 'vote-closed-18', eventId: 'event-closed-1', voterId: 'rh-col-2', votedForIds: ['rh-col-1', 'trans-col-4', 'inv-col-5'], voteDate: new Date('2024-11-11') },
+    { id: 'vote-closed-19', eventId: 'event-closed-1', voterId: 'rh-col-3', votedForIds: ['rh-col-1', 'trans-col-1', 'inv-col-1'], voteDate: new Date('2024-11-12') },
+    { id: 'vote-closed-20', eventId: 'event-closed-1', voterId: 'rh-col-4', votedForIds: ['rh-col-3', 'trans-col-3', 'inv-col-2'], voteDate: new Date('2024-11-12') },
+    { id: 'vote-closed-21', eventId: 'event-closed-1', voterId: 'rh-col-5', votedForIds: ['rh-col-1', 'trans-col-1', 'inv-col-1'], voteDate: new Date('2024-11-13') }
 ];
 
 export const auditLogs: AuditLog[] = [
-    { id: 'log-1', userId: 'user-1', action: 'Inicio de Sesión', timestamp: new Date(), details: { ip: '192.168.1.1' } },
-    { id: 'log-2', userId: 'user-2', action: 'Nominar Colaborador', timestamp: new Date(), details: { collaboratorId: 'user-3' } },
+    { id: 'log-1', userId: 'admin-1', action: 'Inicio de Sesión', timestamp: new Date(), details: { ip: '192.168.1.100' } },
+    { id: 'log-2', userId: 'trans-sup-1', action: 'Nominar Colaborador', timestamp: new Date('2024-12-02'), details: { collaboratorId: 'trans-col-1', eventId: 'event-active-1' } },
+    { id: 'log-3', userId: 'inv-sup-1', action: 'Nominar Colaborador', timestamp: new Date('2024-12-03'), details: { collaboratorId: 'inv-col-1', eventId: 'event-active-1' } },
+    { id: 'log-4', userId: 'rh-sup-1', action: 'Nominar Colaborador', timestamp: new Date('2024-12-04'), details: { collaboratorId: 'rh-col-1', eventId: 'event-active-1' } },
+    { id: 'log-5', userId: 'admin-1', action: 'Crear Evento', timestamp: new Date('2024-12-01'), details: { eventId: 'event-active-1', eventName: 'Diciembre 2024' } },
+    { id: 'log-6', userId: 'admin-1', action: 'Cerrar Evento', timestamp: new Date('2024-11-21'), details: { eventId: 'event-closed-1', eventName: 'Noviembre 2024' } },
 ];
+
+// Test nominated entries data for departments - Results from closed event (Noviembre 2024)
+export const testNominatedEntries: Record<Department, NominatedEntry[]> = {
+    "Transporte": [
+        { votes: 12, user: 'trans-col-1', event: 'event-closed-1', votedby: ['trans-sup-1', 'trans-col-2', 'trans-col-3', 'trans-col-4', 'inv-sup-1', 'inv-col-1', 'inv-col-3', 'rh-sup-1', 'rh-col-3', 'rh-col-5'], surveyResult: 92 },
+        { votes: 6, user: 'trans-col-3', event: 'event-closed-1', votedby: ['trans-coord-1', 'trans-col-5', 'inv-coord-1', 'rh-coord-1', 'rh-col-4'], surveyResult: 78 },
+        { votes: 4, user: 'trans-col-4', event: 'event-closed-1', votedby: ['trans-col-1', 'inv-col-2', 'rh-col-2'], surveyResult: 71 },
+    ],
+    "Gestion de Inventario": [
+        { votes: 10, user: 'inv-col-1', event: 'event-closed-1', votedby: ['inv-sup-1', 'inv-col-2', 'inv-col-3', 'inv-col-5', 'trans-sup-1', 'trans-col-3', 'rh-sup-1', 'rh-col-1', 'rh-col-3'], surveyResult: 88 },
+        { votes: 5, user: 'inv-col-2', event: 'event-closed-1', votedby: ['inv-coord-1', 'inv-col-4', 'trans-col-4', 'rh-coord-1', 'rh-col-4'], surveyResult: 75 },
+        { votes: 3, user: 'inv-col-5', event: 'event-closed-1', votedby: ['inv-col-1', 'trans-col-2', 'rh-col-2'], surveyResult: 69 },
+    ],
+    "Recursos Humanos": [
+        { votes: 11, user: 'rh-col-1', event: 'event-closed-1', votedby: ['rh-sup-1', 'rh-col-2', 'rh-col-3', 'rh-col-5', 'trans-sup-1', 'trans-col-2', 'trans-col-4', 'inv-sup-1', 'inv-col-1', 'inv-col-4'], surveyResult: 95 },
+        { votes: 6, user: 'rh-col-3', event: 'event-closed-1', votedby: ['rh-coord-1', 'rh-col-4', 'trans-coord-1', 'trans-col-5', 'inv-coord-1', 'inv-col-5'], surveyResult: 82 },
+        { votes: 4, user: 'rh-col-4', event: 'event-closed-1', votedby: ['rh-col-1', 'trans-col-5', 'inv-col-1'], surveyResult: 74 },
+    ]
+};

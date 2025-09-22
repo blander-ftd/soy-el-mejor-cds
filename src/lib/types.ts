@@ -1,6 +1,14 @@
 export type Role = "Admin" | "Supervisor" | "Coordinator" | "Collaborator";
 
-export type Department = "Technology" | "Marketing" | "Sales" | "Human Resources";
+export type Department = "Transporte" | "Gestion de Inventario" | "Recursos Humanos";
+
+export interface NominatedEntry {
+  votes: number;
+  user: string;
+  event: string;
+  votedby: string[];
+  surveyResult: number;
+}
 
 export interface User {
   id: string;

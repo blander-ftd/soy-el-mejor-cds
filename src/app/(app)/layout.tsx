@@ -12,14 +12,34 @@ import LiveClock from '@/components/live-clock';
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { currentUser, loading } = useAuth();
   const router = useRouter();
+  const isDevelopment = process.env.NODE_ENV === 'development';
 
   useEffect(() => {
-    if (!loading && !currentUser) {
+    if (!loading && !currentUser && !isDevelopment) {
       router.push('/login');
     }
-  }, [currentUser, loading, router]);
+  }, [currentUser, loading, router, isDevelopment]);
 
-  if (loading || !currentUser) {
+  if (loading || (!currentUser && !isDevelopment)) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="h-16 w-16 animate-spin rounded-full border-4 border-solid border-primary border-t-transparent"></div>
+      </div>
+    );
+  }
+
+  // In development, use a fallback user if none is set
+  const displayUser = currentUser || (isDevelopment ? {
+    id: 'dev-user',
+    name: 'Development User',
+    email: 'dev@example.com',
+    cedula: '00000000',
+    role: 'Admin' as const,
+    department: 'Technology' as const,
+    avatar: 'https://picsum.photos/id/1/100'
+  } : null);
+
+  if (!displayUser) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="h-16 w-16 animate-spin rounded-full border-4 border-solid border-primary border-t-transparent"></div>
@@ -37,7 +57,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
         </div>
         <nav className="flex-1 overflow-auto py-4">
-          <MainNav role={currentUser.role} />
+          <MainNav role={displayUser.role} />
         </nav>
       </aside>
 
@@ -46,7 +66,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <LiveClock />
           <div className="flex items-center gap-4">
             <ThemeToggle />
-            <UserNav user={currentUser} />
+            <UserNav user={displayUser} />
           </div>
         </header>
         <main className="flex-1 p-4 sm:p-6">{children}</main>

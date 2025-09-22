@@ -20,6 +20,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => Promise<void>;
   loading: boolean;
+  switchUser?: (userId: string) => void; // Development only
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -30,7 +31,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
+  // Development mode - bypass authentication
+  const isDevelopment = process.env.NODE_ENV === 'development';
+
   useEffect(() => {
+    if (isDevelopment) {
+      // In development, set a default admin user and skip Firebase auth
+      const defaultUser = users.find(u => u.role === 'Admin') || users[0];
+      setCurrentUser(defaultUser);
+      setLoading(false);
+      return;
+    }
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
       setFirebaseUser(firebaseUser);
       
@@ -59,15 +71,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [isDevelopment]);
 
   const login = async (email: string, password: string): Promise<boolean> => {
+    if (isDevelopment) {
+      // In development, find user by email or cedula
+      const user = users.find(u => u.email === email || u.cedula === email);
+      if (user) {
+        setCurrentUser(user);
+        return true;
+      }
+      return false;
+    }
+
     try {
       await signInWithEmailAndPassword(auth, email, password);
       return true;
     } catch (error) {
       console.error('Login error:', error);
       return false;
+    }
+  };
+
+  const switchUser = (userId: string) => {
+    if (isDevelopment) {
+      const user = users.find(u => u.id === userId);
+      if (user) {
+        setCurrentUser(user);
+      }
     }
   };
 
@@ -80,7 +111,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const value = { currentUser, firebaseUser, login, logout, loading };
+  const value = { 
+    currentUser, 
+    firebaseUser, 
+    login, 
+    logout, 
+    loading,
+    ...(isDevelopment && { switchUser })
+  };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

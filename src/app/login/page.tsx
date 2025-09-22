@@ -51,7 +51,44 @@ export default function LoginPage() {
     }
   };
 
-  const handleQuickAccess = (path: string, roleName: string) => {
+  const handleQuickAccess = async (path: string, roleName: string) => {
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    
+    if (isDevelopment) {
+      // In development, set a user based on the role and navigate
+      const roleMap: Record<string, string> = {
+        '/admin': 'Admin',
+        '/supervisor': 'Supervisor', 
+        '/coordinator': 'Coordinator',
+        '/collaborator': 'Collaborator',
+        '/survey': 'Collaborator', // Survey can be accessed by collaborators
+        '/results': 'Admin' // Results can be viewed by admins
+      };
+      
+      const targetRole = roleMap[path] || 'Admin';
+      
+      // Try to log in with a demo user of the appropriate role
+      const demoEmails: Record<string, string> = {
+        'Admin': 'admin@example.com',
+        'Supervisor': 'supervisor.tech@example.com',
+        'Coordinator': 'coordinator.tech@example.com',
+        'Collaborator': 'collaborator.tech@example.com'
+      };
+      
+      const demoEmail = demoEmails[targetRole];
+      if (demoEmail) {
+        const success = await login(demoEmail, 'demo'); // Use any password in dev mode
+        if (success) {
+          toast({
+            title: 'Acceso Directo',
+            description: `Navegando a ${roleName} como usuario de demostración...`,
+          });
+          router.push(path);
+          return;
+        }
+      }
+    }
+    
     toast({
       title: 'Acceso Directo',
       description: `Navegando a ${roleName}...`,

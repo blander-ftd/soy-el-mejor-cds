@@ -14,9 +14,10 @@
         ".git",
         "firebase-debug.log",
         "firebase-debug.*.log",
-        "*.local"
+        "*.local",
+        "node_modules"
       ],
-      "runtime": "python313"
+      "runtime": "nodejs22"
     }
   ],
   "hosting": {
@@ -29,6 +30,18 @@
     ],
     "frameworksBackend": {
       "region": "us-central1"
+    }
+  },
+  "emulators": {
+    "functions": {
+      "port": 5001
+    },
+    "firestore": {
+      "port": 8080
+    },
+    "ui": {
+      "enabled": true,
+      "port": 4000
     }
   }
 }

@@ -33,7 +33,12 @@ export default function Home() {
               router.replace('/login');
           }
       } else {
-        router.replace("/login");
+        // In development, redirect to admin page by default instead of login
+        if (process.env.NODE_ENV === 'development') {
+          router.replace('/admin');
+        } else {
+          router.replace("/login");
+        }
       }
     }
   }, [router, currentUser, loading, isClient]);
