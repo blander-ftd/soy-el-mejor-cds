@@ -27,8 +27,8 @@ export interface VotingEvent extends DocumentData {
   /** Name/title of the event (e.g., "Agosto 2024") */
   month: string;
   
-  /** Department this event is for, or "All Departments" for company-wide */
-  department?: EventDepartment;
+  /** Department this event is for, always "All Departments" for company-wide events */
+  department: "All Departments";
   
   /** Current status of the voting event */
   status: VotingEventStatus;
@@ -70,8 +70,18 @@ export interface VotingEvent extends DocumentData {
 export const votingEventConverter = {
   toFirestore: (event: VotingEvent): DocumentData => {
     const { id, ...eventData } = event;
+    
+    // Filter out undefined values
+    const cleanData: any = {};
+    Object.keys(eventData).forEach(key => {
+      const value = (eventData as any)[key];
+      if (value !== undefined) {
+        cleanData[key] = value;
+      }
+    });
+    
     return {
-      ...eventData,
+      ...cleanData,
       updatedAt: Timestamp.now()
     };
   },
@@ -90,6 +100,7 @@ export const votingEventConverter = {
  */
 export const createDefaultVotingEvent = (overrides: Partial<VotingEvent> = {}): Omit<VotingEvent, 'id'> => ({
   month: '',
+  department: 'All Departments',
   status: 'Pending',
   surveyQuestions: [
     { title: 'Trabajo en Equipo y Colaboración', body: '¿Qué tan bien colabora esta persona con otros hacia un objetivo común?' },

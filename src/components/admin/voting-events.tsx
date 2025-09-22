@@ -84,8 +84,8 @@ const eventFormSchema = z.object({
 }).refine(data => data.evaluationEndDate > data.votingEndDate, {
     message: "Debe ser posterior a la fase de votación.",
     path: ["evaluationEndDate"],
-}).refine(data => data.evaluationEndDate.toDateString() === data.dateRange.to.toDateString(), {
-    message: "Debe ser la fecha de fin del evento.",
+}).refine(data => data.evaluationEndDate <= data.dateRange.to, {
+    message: "Debe ser anterior o igual a la fecha de fin del evento.",
     path: ["evaluationEndDate"],
 });
 
@@ -107,7 +107,7 @@ const defaultFormValues: EventFormValues = {
         { title: 'Resolución de Problemas y Resiliencia', body: '¿Cuán efectiva es esta persona para superar desafíos y encontrar soluciones?' },
         { title: 'Impacto y Contribución', body: '¿Cuál ha sido la contribución o impacto más significativo de esta persona este mes?' }
     ],
-    winnerMessage: "",
+    winnerMessage: undefined,
 }
 
 
@@ -229,7 +229,7 @@ export function VotingEvents() {
             
             if (isEditing && editingEvent) {
                 // For editing, update the single event
-                const eventData = {
+                const eventData: any = {
                     month: data.month.trim(),
                     department: editingEvent.department,
                     startDate: Timestamp.fromDate(data.dateRange.from),
@@ -242,9 +242,13 @@ export function VotingEvents() {
                         title: q.title.trim(),
                         body: q.body.trim()
                     })),
-                    createdBy: currentUser?.id,
-                    winnerMessage: data.winnerMessage?.trim() || undefined
+                    createdBy: currentUser?.id
                 };
+
+                // Only add winnerMessage if it has content
+                if (data.winnerMessage?.trim()) {
+                    eventData.winnerMessage = data.winnerMessage.trim();
+                }
 
                 await votingEventService.update(editingEvent.id, eventData);
                 
@@ -269,46 +273,45 @@ export function VotingEvents() {
                     );
                 }
             } else {
-                // For creating new events, create one for each department
-                const createdEventIds: string[] = [];
-                
-                for (const department of departments) {
-                    const eventData = {
-                        month: data.month.trim(),
-                        department: department.name as EventDepartment,
-                        startDate: Timestamp.fromDate(data.dateRange.from),
-                        endDate: Timestamp.fromDate(data.dateRange.to),
-                        nominationEndDate: Timestamp.fromDate(data.nominationEndDate),
-                        votingEndDate: Timestamp.fromDate(data.votingEndDate),
-                        evaluationEndDate: Timestamp.fromDate(data.evaluationEndDate),
-                        status: "Pending" as const,
-                        surveyQuestions: data.surveyQuestions.map(q => ({
-                            title: q.title.trim(),
-                            body: q.body.trim()
-                        })),
-                        createdBy: currentUser?.id,
-                        winnerMessage: data.winnerMessage?.trim() || undefined
-                    };
+                // For creating new events, create one event for all departments
+                const eventData: any = {
+                    month: data.month.trim(),
+                    department: "All Departments" as const,
+                    startDate: Timestamp.fromDate(data.dateRange.from),
+                    endDate: Timestamp.fromDate(data.dateRange.to),
+                    nominationEndDate: Timestamp.fromDate(data.nominationEndDate),
+                    votingEndDate: Timestamp.fromDate(data.votingEndDate),
+                    evaluationEndDate: Timestamp.fromDate(data.evaluationEndDate),
+                    status: "Pending" as const,
+                    surveyQuestions: data.surveyQuestions.map(q => ({
+                        title: q.title.trim(),
+                        body: q.body.trim()
+                    })),
+                    createdBy: currentUser?.id
+                };
 
-                    const eventId = await votingEventService.create(eventData);
-                    createdEventIds.push(eventId);
+                // Only add winnerMessage if it has content
+                if (data.winnerMessage?.trim()) {
+                    eventData.winnerMessage = data.winnerMessage.trim();
                 }
+
+                const eventId = await votingEventService.create(eventData);
                 
-                // Log the action for all created events
+                // Log the action for the created event
                 if (currentUser) {
                     await auditLogService.logAction(
                         currentUser.id,
                         currentUser.name,
-                        'Crear Eventos',
+                        'Crear Evento',
                         { 
-                            eventIds: createdEventIds, 
+                            eventId: eventId, 
                             eventName: data.month, 
-                            departments: departments,
+                            department: "All Departments",
                             startDate: data.dateRange.from.toISOString(),
                             endDate: data.dateRange.to.toISOString()
                         },
                         { 
-                            resourceId: createdEventIds[0], 
+                            resourceId: eventId, 
                             resourceType: 'event', 
                             severity: 'medium',
                             success: true
@@ -321,10 +324,10 @@ export function VotingEvents() {
             await loadVotingEvents();
 
             toast({
-                title: isEditing ? "¡Evento Actualizado Exitosamente!" : "¡Eventos Creados Exitosamente!",
+                title: isEditing ? "¡Evento Actualizado Exitosamente!" : "¡Evento Creado Exitosamente!",
                 description: isEditing 
                     ? `El evento "${data.month}" ha sido actualizado correctamente.`
-                    : `Los eventos "${data.month}" han sido programados para todos los departamentos.`,
+                    : `El evento "${data.month}" ha sido creado para todos los departamentos.`,
             });
             
             // Reset form and close dialog
@@ -340,13 +343,13 @@ export function VotingEvents() {
                 await auditLogService.logAction(
                     currentUser.id,
                     currentUser.name,
-                    editingEvent ? 'Editar Evento' : 'Crear Eventos',
+                    editingEvent ? 'Editar Evento' : 'Crear Evento',
                     { 
                         attemptedEventName: data.month,
                         error: error.message
                     },
                     { 
-                        resourceId: editingEvent?.id,
+                        ...(editingEvent?.id && { resourceId: editingEvent.id }),
                         resourceType: 'event', 
                         severity: 'high',
                         success: false,
@@ -376,17 +379,21 @@ export function VotingEvents() {
         setOpen(true);
     }
 
-    // Load users by department
+    // Load all collaborators (regardless of department)
     const loadDepartmentUsers = async (department: string) => {
         try {
-            const users = await userService.getByDepartment(department);
-            setDepartmentUsers(users);
+            // Load all users with role "Collaborator" from the selected department
+            const allUsers = await userService.getAll();
+            const collaborators = allUsers.filter(user => 
+                user.role === 'Collaborator' && user.department === department
+            );
+            setDepartmentUsers(collaborators);
         } catch (error) {
-            console.error('Error loading department users:', error);
+            console.error('Error loading department collaborators:', error);
             toast({
                 variant: "destructive",
                 title: "Error",
-                description: "No se pudieron cargar los usuarios del departamento.",
+                description: "No se pudieron cargar los colaboradores del departamento.",
             });
         }
     };
@@ -543,7 +550,7 @@ export function VotingEvents() {
             await auditLogService.logAction(
                 currentUser.id,
                 currentUser.name,
-                'Agregar Votos',
+                'Manejo de Votos',
                 {
                     eventId: selectedEvent.id,
                     department: selectedDepartment,
@@ -659,7 +666,7 @@ export function VotingEvents() {
                     <DialogHeader className="flex-shrink-0">
                         <DialogTitle>{editingEvent ? 'Editar' : 'Crear Nuevo'} Evento de Votación</DialogTitle>
                         <DialogDescription>
-                           {editingEvent ? 'Actualiza los detalles del evento a continuación.' : 'Define los parámetros y el cronograma para el nuevo evento de votación. Se creará automáticamente para todos los departamentos.'}
+                           {editingEvent ? 'Actualiza los detalles del evento a continuación.' : 'Define los parámetros y el cronograma para el nuevo evento de votación. Se creará un solo evento que incluirá a todos los departamentos.'}
                         </DialogDescription>
                     </DialogHeader>
                     <div className="flex-grow overflow-y-auto pr-6 -mr-6">
@@ -676,7 +683,7 @@ export function VotingEvents() {
                                                     <Input placeholder="ej., Agosto 2024" {...field} />
                                                 </FormControl>
                                                 <FormDescription>
-                                                    Este evento se creará automáticamente para todos los departamentos.
+                                                    Se creará un solo evento que incluirá a todos los departamentos.
                                                 </FormDescription>
                                                 <FormMessage />
                                             </FormItem>
@@ -904,6 +911,20 @@ export function VotingEvents() {
                                 </div>
                                 
                                 <DialogFooter className="flex-shrink-0 pt-4 border-t">
+                                    {/* Debug validation errors */}
+                                    {!form.formState.isValid && Object.keys(form.formState.errors).length > 0 && (
+                                        <div className="w-full mb-4 p-3 bg-destructive/10 border border-destructive/20 rounded-md">
+                                            <p className="text-sm font-medium text-destructive mb-2">Errores de validación:</p>
+                                            <ul className="text-xs text-destructive space-y-1">
+                                                {Object.entries(form.formState.errors).map(([field, error]) => (
+                                                    <li key={field}>
+                                                        <strong>{field}:</strong> {error?.message || 'Error de validación'}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    )}
+                                    
                                     <Button 
                                         type="button" 
                                         variant="ghost" 
@@ -915,6 +936,7 @@ export function VotingEvents() {
                                     <Button 
                                         type="submit" 
                                         disabled={isSubmitting || !form.formState.isValid}
+                                        title={!form.formState.isValid ? "Por favor, completa todos los campos correctamente" : ""}
                                     >
                                         {isSubmitting ? (
                                             <>
@@ -1017,7 +1039,7 @@ export function VotingEvents() {
                         </DropdownMenuItem>
                         <DropdownMenuItem onSelect={() => handleVotingAction(event)}>
                             <VoteIcon className="mr-2 h-4 w-4"/>
-                            Agregar Votos
+                            Manejo de Votos
                         </DropdownMenuItem>
                         <DropdownMenuItem onSelect={() => handleSurveyAction(event)}>
                             <Star className="mr-2 h-4 w-4"/>
@@ -1111,7 +1133,7 @@ export function VotingEvents() {
         <Dialog open={votingDialogOpen} onOpenChange={setVotingDialogOpen}>
             <DialogContent className="sm:max-w-2xl">
                 <DialogHeader>
-                    <DialogTitle>Agregar Votos</DialogTitle>
+                    <DialogTitle>Manejo de Votos</DialogTitle>
                     <DialogDescription>
                         Selecciona un departamento y vota por los candidatos nominados para el evento "{selectedEvent?.month}".
                     </DialogDescription>

@@ -145,14 +145,25 @@ export const createAuditLogEntry = (
     newState?: Record<string, any>;
     canUndo?: boolean;
   } = {}
-): Omit<AuditLog, 'id'> => ({
-  userId,
-  userName,
-  action,
-  timestamp: Timestamp.now(),
-  details,
-  severity: options.severity || 'low',
-  success: options.success !== false,
-  createdAt: Timestamp.now(),
-  ...options
-});
+): Omit<AuditLog, 'id'> => {
+  // Filter out undefined values from options
+  const cleanOptions: any = {};
+  Object.keys(options).forEach(key => {
+    const value = (options as any)[key];
+    if (value !== undefined) {
+      cleanOptions[key] = value;
+    }
+  });
+
+  return {
+    userId,
+    userName,
+    action,
+    timestamp: Timestamp.now(),
+    details,
+    severity: options.severity || 'low',
+    success: options.success !== false,
+    createdAt: Timestamp.now(),
+    ...cleanOptions
+  };
+};

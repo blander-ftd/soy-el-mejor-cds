@@ -70,14 +70,18 @@ const createUserFormSchema = (departmentNames: string[]) => z.object({
     role: z.enum(["Admin", "Supervisor", "Coordinator", "Collaborator"], {
         errorMap: () => ({ message: "Selecciona un rol válido." })
     }),
-    department: departmentNames.length > 0 
-        ? z.enum(departmentNames as [string, ...string[]], {
-            errorMap: () => ({ message: "Selecciona un departamento válido." })
-        }).optional()
-        : z.string().optional(),
+    department: z.string().optional(),
 }).refine((data) => {
     // Department is required for all roles except Admin
-    if (data.role !== "Admin" && !data.department) {
+    if (data.role !== "Admin" && (!data.department || data.department.trim() === "")) {
+        return false;
+    }
+    // For Admin role, department should be empty or undefined
+    if (data.role === "Admin" && data.department && data.department.trim() !== "") {
+        return false;
+    }
+    // If department is provided for non-Admin, it must be valid
+    if (data.role !== "Admin" && data.department && departmentNames.length > 0 && !departmentNames.includes(data.department)) {
         return false;
     }
     return true;
@@ -124,10 +128,17 @@ export function UserManagement() {
             email: "", 
             cedula: "",
             role: "Collaborator", 
-            department: departmentNames[0] || "" 
+            department: "" 
         },
         mode: "onChange"
     });
+
+    // Update form when departments are loaded
+    useEffect(() => {
+        if (departments.length > 0 && !form.getValues('department') && form.getValues('role') !== 'Admin') {
+            form.setValue('department', departments[0].name);
+        }
+    }, [departments, form]);
 
     const editForm = useForm<UserFormValues>({
         resolver: zodResolver(userFormSchema),
@@ -311,21 +322,50 @@ export function UserManagement() {
                 return;
             }
 
-            const newUserData = {
+            const newUserData: any = {
                 name: userData.name.trim(),
                 email: finalEmail.toLowerCase().trim(),
                 role: userData.role,
-                department: userData.role === 'Admin' ? undefined : userData.department,
                 avatar: `https://picsum.photos/seed/${encodeURIComponent(userData.name)}/100`,
-                cedula: userData.cedula?.trim() || undefined,
             };
+
+            // Only add department if not Admin and has value
+            if (userData.role !== 'Admin' && userData.department) {
+                newUserData.department = userData.department;
+            }
+
+            // Only add cedula if it has a value
+            if (userData.cedula?.trim()) {
+                newUserData.cedula = userData.cedula.trim();
+            }
 
             // Create user with Firebase Auth credentials
             let result, userId;
             try {
+                console.log('Attempting to create user with data:', newUserData);
                 result = await userService.createWithAuth(newUserData);
                 userId = result.userId;
+                console.log('User created successfully with auth:', result);
             } catch (error: any) {
+                console.error('Error creating user with auth:', error);
+                console.error('Error details:', {
+                    message: error.message,
+                    code: error.code,
+                    details: error.details
+                });
+                
+                // Check if it's a specific validation error
+                if (error.message?.includes('Missing required fields') || 
+                    error.message?.includes('Cedula is required') ||
+                    error.message?.includes('Department is required')) {
+                    toast({
+                        variant: "destructive",
+                        title: "Error de Validación",
+                        description: error.message,
+                    });
+                    return;
+                }
+                
                 console.warn('Firebase Function not available, falling back to regular user creation:', error.message);
                 
                 // Fallback to regular user creation (without auth credentials)
@@ -481,13 +521,21 @@ export function UserManagement() {
                 department: editingUser.department
             };
 
-            const updatedUserData = {
+            const updatedUserData: any = {
                 name: data.name.trim(),
                 email: (data.email || "").toLowerCase().trim(),
-                cedula: data.cedula?.trim() || undefined,
                 role: data.role,
-                department: data.role === 'Admin' ? undefined : data.department as any,
             };
+
+            // Only add department if not Admin and has value
+            if (data.role !== 'Admin' && data.department) {
+                updatedUserData.department = data.department;
+            }
+
+            // Only add cedula if it has a value
+            if (data.cedula?.trim()) {
+                updatedUserData.cedula = data.cedula.trim();
+            }
 
             await userService.update(editingUser.id, updatedUserData);
             
@@ -667,7 +715,9 @@ export function UserManagement() {
                                             form.setValue('role', value);
                                             setSelectedRole(value);
                                             if (value === 'Admin') {
-                                                form.setValue('department', undefined);
+                                                form.setValue('department', '');
+                                            } else if (departments.length > 0) {
+                                                form.setValue('department', departments[0].name);
                                             }
                                         }} 
                                         defaultValue={form.getValues('role')}
@@ -714,6 +764,20 @@ export function UserManagement() {
                             </div>
                             
                             <DialogFooter>
+                                {/* Debug validation errors */}
+                                {!form.formState.isValid && Object.keys(form.formState.errors).length > 0 && (
+                                    <div className="w-full mb-4 p-3 bg-destructive/10 border border-destructive/20 rounded-md">
+                                        <p className="text-sm font-medium text-destructive mb-2">Errores de validación:</p>
+                                        <ul className="text-xs text-destructive space-y-1">
+                                            {Object.entries(form.formState.errors).map(([field, error]) => (
+                                                <li key={field}>
+                                                    <strong>{field}:</strong> {error?.message || 'Error de validación'}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
+                                
                                 <Button 
                                     type="button" 
                                     variant="ghost" 
@@ -725,6 +789,7 @@ export function UserManagement() {
                                 <Button 
                                     type="submit" 
                                     disabled={isCreatingUser || !form.formState.isValid}
+                                    title={!form.formState.isValid ? "Por favor, completa todos los campos correctamente" : ""}
                                 >
                                     {isCreatingUser ? (
                                         <>

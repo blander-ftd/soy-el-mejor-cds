@@ -72,21 +72,24 @@ export const userService = {
     const createUserWithAuth = httpsCallable(functions, 'createUserWithAuth');
     
     try {
-      console.log('Calling createUserWithAuth with data:', {
+      // Clean data to remove undefined values
+      const cleanUserData: any = {
         name: userData.name,
         email: userData.email,
-        role: userData.role,
-        department: userData.department,
-        cedula: userData.cedula
-      });
+        role: userData.role
+      };
 
-      const result = await createUserWithAuth({
-        name: userData.name,
-        email: userData.email,
-        role: userData.role,
-        department: userData.department,
-        cedula: userData.cedula
-      });
+      if (userData.department) {
+        cleanUserData.department = userData.department;
+      }
+
+      if (userData.cedula) {
+        cleanUserData.cedula = userData.cedula;
+      }
+
+      console.log('Calling createUserWithAuth with data:', cleanUserData);
+
+      const result = await createUserWithAuth(cleanUserData);
 
       console.log('Function result:', result);
       const data = result.data as any;
@@ -104,8 +107,14 @@ export const userService = {
       console.error('Error details:', {
         code: error.code,
         message: error.message,
-        details: error.details
+        details: error.details,
+        data: error.data
       });
+      
+      // If the function returned an error with a message, use that
+      if (error.details?.message) {
+        throw new Error(error.details.message);
+      }
       
       // Handle specific Firebase Function errors
       if (error.code === 'functions/not-found') {
@@ -136,11 +145,13 @@ export const userService = {
   async getByDepartment(department: string): Promise<User[]> {
     const q = query(
       collection(db, COLLECTIONS.USERS).withConverter(userConverter),
-      where('department', '==', department),
-      orderBy('name')
+      where('department', '==', department)
     );
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => doc.data());
+    const users = querySnapshot.docs.map(doc => doc.data());
+    
+    // Sort client-side to avoid composite index requirement
+    return users.sort((a, b) => a.name.localeCompare(b.name));
   }
 };
 
@@ -244,11 +255,13 @@ export const auditLogService = {
     const q = query(
       collection(db, COLLECTIONS.AUDIT_LOGS).withConverter(auditLogConverter),
       where('userId', '==', userId),
-      orderBy('timestamp', 'desc'),
       limit(limitCount)
     );
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => doc.data());
+    const logs = querySnapshot.docs.map(doc => doc.data());
+    
+    // Sort client-side to avoid composite index requirement
+    return logs.sort((a, b) => b.timestamp.toDate().getTime() - a.timestamp.toDate().getTime());
   },
 
   async getById(id: string): Promise<AuditLog | null> {
@@ -293,11 +306,13 @@ export const auditLogService = {
       constraints.push(where('timestamp', '<=', Timestamp.fromDate(filters.endDate)));
     }
 
-    constraints.push(orderBy('timestamp', 'desc'));
     constraints.push(limit(filters.limit || 100));
 
     const querySnapshot = await getDocs(query(q, ...constraints));
-    return querySnapshot.docs.map(doc => doc.data());
+    const logs = querySnapshot.docs.map(doc => doc.data());
+    
+    // Sort client-side to avoid composite index requirement
+    return logs.sort((a, b) => b.timestamp.toDate().getTime() - a.timestamp.toDate().getTime());
   },
 
   async undoAction(

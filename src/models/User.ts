@@ -50,8 +50,18 @@ export interface User extends DocumentData {
 export const userConverter = {
   toFirestore: (user: User): DocumentData => {
     const { id, ...userData } = user;
+    
+    // Filter out undefined values
+    const cleanData: any = {};
+    Object.keys(userData).forEach(key => {
+      const value = (userData as any)[key];
+      if (value !== undefined) {
+        cleanData[key] = value;
+      }
+    });
+    
     return {
-      ...userData,
+      ...cleanData,
       updatedAt: Timestamp.now()
     };
   },

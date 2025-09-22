@@ -59,8 +59,13 @@ export const createUserWithAuth = onCall(async (request) => {
     const { name, email, role, department, cedula } = request.data;
 
     // Validate required fields
-    if (!name || !role || !cedula) {
-      throw new Error('Missing required fields: name, role, cedula');
+    if (!name || !role) {
+      throw new Error('Missing required fields: name, role');
+    }
+
+    // Cedula is required for password generation
+    if (!cedula) {
+      throw new Error('Cedula is required for password generation');
     }
 
     // Department is required for all roles except Admin

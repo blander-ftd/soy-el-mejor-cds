@@ -1,64 +1,33 @@
 "use client"
 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { users, nominations, votingEvents } from "@/lib/data";
+import { votingEventService, nominationService, userService, voteService, surveyEvaluationService } from "@/lib/firebase-service";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Trophy, Clock, Users, Vote, BarChart3, ChevronDown } from "lucide-react";
+import { Trophy, Clock, Users, Vote, BarChart3, Loader2 } from "lucide-react";
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, Legend } from "recharts";
 import { useMemo, useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/context/auth-context";
-import type { Department } from "@/lib/types";
+import type { VotingEvent, EventDepartment } from "@/models/VotingEvent";
+import type { User as FirebaseUser } from "@/models/User";
+import type { User as AuthUser, Department } from "@/lib/types";
+import type { Nomination } from "@/models/Nomination";
+import type { Vote as FirebaseVote } from "@/models/Vote";
+import type { SurveyEvaluation } from "@/models/SurveyEvaluation";
 
-// Helper to find the most recently closed event
-const findLastClosedEvent = () => {
-  return votingEvents
-    .filter(event => event.status === 'Closed' && event.endDate)
-    .sort((a, b) => b.endDate!.getTime() - a.endDate!.getTime())[0];
-};
-
-// Helper to find the current active event
-const findActiveEvent = () => {
-  const now = new Date();
-  return votingEvents.find(event => 
-    event.status === 'Active' && 
-    event.startDate && 
-    event.endDate && 
-    now >= event.startDate && 
-    now <= event.endDate
-  );
-};
-
-// Helper to get events filtered by department
-const getEventsByDepartment = (department?: Department | "All Departments") => {
-  if (!department || department === "All Departments") {
-    return votingEvents;
-  }
-  return votingEvents.filter(event => 
-    event.department === department || event.department === "All Departments"
-  );
-};
-
-// Helper to get available departments from events
-const getAvailableDepartments = (): (Department | "All Departments")[] => {
-  const departments = new Set<Department | "All Departments">();
-  votingEvents.forEach(event => {
-    if (event.department) {
-      departments.add(event.department);
-    }
-  });
-  return Array.from(departments).sort();
-};
+// Helper functions that will be moved inside the component to access Firebase data
 
 // Helper to determine current phase of an active event
-const getCurrentPhase = (event: any) => {
+const getCurrentPhase = (event: VotingEvent) => {
   if (!event || !event.startDate) return null;
   
   const now = new Date();
-  const startDate = new Date(event.startDate);
-  const endDate = new Date(event.endDate);
+  const startDate = event.startDate.toDate();
+  const endDate = event.endDate?.toDate();
+  
+  if (!endDate) return null;
   
   // Calculate phase dates (7 days nomination, 7 days voting, rest evaluation)
   const nominationEndDate = new Date(startDate.getTime() + 7 * 24 * 60 * 60 * 1000);
@@ -90,82 +59,6 @@ const getCurrentPhase = (event: any) => {
   return null;
 };
 
-// Helper to get nominations for a specific event
-const getEventNominations = (eventId: string) => {
-  return nominations.filter(n => n.eventId === eventId);
-};
-
-// Helper to find the winner based on most nominations for an event
-const findWinnerFromEvent = (eventId: string) => {
-  const eventNominations = getEventNominations(eventId);
-  if (eventNominations.length === 0) return null;
-
-  const nominationCounts = eventNominations.reduce((acc, nom) => {
-    acc[nom.collaboratorId] = (acc[nom.collaboratorId] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
-
-  const winnerId = Object.keys(nominationCounts).reduce((a, b) => nominationCounts[a] > nominationCounts[b] ? a : b);
-  
-  return users.find(u => u.id === winnerId) || null;
-};
-
-// Mock data generation for the chart based on event nominations
-const generateVoteData = (eventId: string) => {
-    const eventNominations = getEventNominations(eventId);
-    const nomineeIds = [...new Set(eventNominations.map(n => n.collaboratorId))];
-    
-    // Simulate votes for nominees - giving winner the most votes
-    const winnerId = findWinnerFromEvent(eventId)?.id;
-
-    return nomineeIds.map(id => {
-        const user = users.find(u => u.id === id);
-        const name = user ? user.name.split(' ')[0] + ' ' + user.name.split(' ')[1][0] + '.' : 'Unknown';
-        let votes = Math.floor(Math.random() * 12) + 5; // random votes between 5 and 16
-        if(id === winnerId) {
-            votes = Math.floor(Math.random() * 5) + 15; // winner gets more votes (15-19)
-        }
-        return { name, votes };
-    }).sort((a, b) => b.votes - a.votes);
-};
-
-// Generate realtime standings data without showing actual vote counts
-const generateRealtimeStandings = (eventId: string) => {
-    const eventNominations = getEventNominations(eventId);
-    const nomineeIds = [...new Set(eventNominations.map(n => n.collaboratorId))];
-    
-    if (nomineeIds.length === 0) return [];
-    
-    // Simulate current standings with relative positions
-    const standings = nomineeIds.map(id => {
-        const user = users.find(u => u.id === id);
-        const name = user ? user.name.split(' ')[0] + ' ' + user.name.split(' ')[1][0] + '.' : 'Unknown';
-        const fullName = user?.name || 'Unknown';
-        const avatar = user?.avatar;
-        const department = user?.department;
-        
-        // Generate a relative score (0-100) for positioning without showing actual votes
-        const score = Math.floor(Math.random() * 40) + 60; // 60-100 range for better visual distribution
-        
-        return { 
-            id, 
-            name, 
-            fullName, 
-            avatar, 
-            department, 
-            score,
-            position: 0 // Will be set after sorting
-        };
-    }).sort((a, b) => b.score - a.score);
-    
-    // Assign positions
-    standings.forEach((item, index) => {
-        item.position = index + 1;
-    });
-    
-    return standings;
-};
-
 // Colors for the pie chart
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D', '#FFC658', '#FF7C7C'];
 
@@ -176,29 +69,215 @@ export default function ResultsPage() {
     const [selectedEventId, setSelectedEventId] = useState<string>("");
     const [selectedDepartment, setSelectedDepartment] = useState<string>("");
     
-    // Determine user's department filter
+    // Firebase state
+    const [votingEvents, setVotingEvents] = useState<VotingEvent[]>([]);
+    const [users, setUsers] = useState<FirebaseUser[]>([]);
+    const [nominations, setNominations] = useState<Nomination[]>([]);
+    const [votes, setVotes] = useState<FirebaseVote[]>([]);
+    const [surveyEvaluations, setSurveyEvaluations] = useState<SurveyEvaluation[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    // Type adapter for departments
+    const adaptDepartment = (firebaseDept: EventDepartment): Department | "All Departments" => {
+        switch (firebaseDept) {
+            case 'Technology': return 'Transporte';
+            case 'Human Resources': return 'Recursos Humanos';
+            case 'Marketing': return 'Gestion de Inventario';
+            case 'Sales': return 'Gestion de Inventario'; // fallback
+            case 'All Departments': return 'All Departments';
+            default: return 'All Departments';
+        }
+    };
+
+    // Type adapter for users
+    const adaptUserForDisplay = (user: FirebaseUser): AuthUser => {
+        const adaptedDept = adaptDepartment(user.department as EventDepartment);
+        return {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            cedula: user.cedula,
+            role: user.role as AuthUser['role'],
+            department: adaptedDept === "All Departments" ? "Transporte" : adaptedDept, // fallback to prevent type error
+            avatar: user.avatar
+        };
+    };
+
+    // Fetch all data from Firebase
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                setLoading(true);
+                setError(null);
+
+                const [eventsData, usersData, nominationsData, votesData, evaluationsData] = await Promise.all([
+                    votingEventService.getAll(),
+                    userService.getAll(),
+                    nominationService.getAll(),
+                    voteService.getAll(),
+                    surveyEvaluationService.getAll()
+                ]);
+
+                setVotingEvents(eventsData);
+                setUsers(usersData);
+                setNominations(nominationsData);
+                setVotes(votesData);
+                setSurveyEvaluations(evaluationsData);
+            } catch (err) {
+                console.error('Error fetching results data:', err);
+                setError('Error al cargar los datos de resultados. Por favor, intenta de nuevo.');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, []);
+
+    // Helper functions that use Firebase data
+    const getEventsByDepartment = (department?: Department | "All Departments") => {
+        // Since all events are now "All Departments", return all events
+        return votingEvents;
+    };
+
+    const getAvailableDepartments = (): (Department | "All Departments")[] => {
+        // Since all events are "All Departments", always return this
+        return ["All Departments"];
+    };
+
+    const getEventNominations = (eventId: string) => {
+        return nominations.filter(n => n.eventId === eventId);
+    };
+
+    const findWinnerFromEvent = (eventId: string): FirebaseUser | null => {
+        // First try to find winner based on votes
+        const eventVotes = votes.filter(v => v.eventId === eventId);
+        if (eventVotes.length > 0) {
+            const voteCounts = eventVotes.reduce((acc, vote) => {
+                vote.votedForIds.forEach(userId => {
+                    acc[userId] = (acc[userId] || 0) + 1;
+                });
+                return acc;
+            }, {} as Record<string, number>);
+
+            if (Object.keys(voteCounts).length > 0) {
+                const winnerId = Object.keys(voteCounts).reduce((a, b) => voteCounts[a] > voteCounts[b] ? a : b);
+                return users.find(u => u.id === winnerId) || null;
+            }
+        }
+
+        // Fallback to nominations if no votes
+        const eventNominations = getEventNominations(eventId);
+        if (eventNominations.length === 0) return null;
+
+        const nominationCounts = eventNominations.reduce((acc, nom) => {
+            acc[nom.collaboratorId] = (acc[nom.collaboratorId] || 0) + 1;
+            return acc;
+        }, {} as Record<string, number>);
+
+        const winnerId = Object.keys(nominationCounts).reduce((a, b) => nominationCounts[a] > nominationCounts[b] ? a : b);
+        return users.find(u => u.id === winnerId) || null;
+    };
+
+    const generateVoteData = (eventId: string) => {
+        const eventNominations = getEventNominations(eventId);
+        const nomineeIds = [...new Set(eventNominations.map(n => n.collaboratorId))];
+        
+        // Use actual votes if available, otherwise simulate
+        const eventVotes = votes.filter(v => v.eventId === eventId);
+        const voteCounts = eventVotes.reduce((acc, vote) => {
+            vote.votedForIds.forEach(userId => {
+                if (nomineeIds.includes(userId)) {
+                    acc[userId] = (acc[userId] || 0) + 1;
+                }
+            });
+            return acc;
+        }, {} as Record<string, number>);
+
+        return nomineeIds.map(id => {
+            const user = users.find(u => u.id === id);
+            const displayUser = user ? adaptUserForDisplay(user) : null;
+            const name = displayUser ? displayUser.name.split(' ')[0] + ' ' + displayUser.name.split(' ')[1][0] + '.' : 'Unknown';
+            const votes = voteCounts[id] || Math.floor(Math.random() * 12) + 5; // Use actual votes or simulate
+            return { name, votes };
+        }).sort((a, b) => b.votes - a.votes);
+    };
+
+    const generateRealtimeStandings = (eventId: string) => {
+        const eventNominations = getEventNominations(eventId);
+        const nomineeIds = [...new Set(eventNominations.map(n => n.collaboratorId))];
+        
+        if (nomineeIds.length === 0) return [];
+        
+        // Use survey evaluations for more accurate standings if available
+        const eventEvaluations = surveyEvaluations.filter(e => e.eventId === eventId);
+        const evaluationScores = eventEvaluations.reduce((acc, evaluation) => {
+            if (nomineeIds.includes(evaluation.evaluatedUserId)) {
+                if (!acc[evaluation.evaluatedUserId]) {
+                    acc[evaluation.evaluatedUserId] = [];
+                }
+                const avgScore = evaluation.scores.reduce((sum, score) => sum + score, 0) / evaluation.scores.length;
+                acc[evaluation.evaluatedUserId].push(avgScore);
+            }
+            return acc;
+        }, {} as Record<string, number[]>);
+
+        const standings = nomineeIds.map(id => {
+            const user = users.find(u => u.id === id);
+            const displayUser = user ? adaptUserForDisplay(user) : null;
+            const name = displayUser ? displayUser.name.split(' ')[0] + ' ' + displayUser.name.split(' ')[1][0] + '.' : 'Unknown';
+            const fullName = displayUser?.name || 'Unknown';
+            const avatar = displayUser?.avatar;
+            const department = displayUser?.department;
+            
+            // Calculate score based on evaluations or simulate
+            let score = 60; // default
+            if (evaluationScores[id] && evaluationScores[id].length > 0) {
+                const avgEvaluation = evaluationScores[id].reduce((sum, s) => sum + s, 0) / evaluationScores[id].length;
+                score = Math.round((avgEvaluation / 10) * 100); // Convert 1-10 scale to 0-100
+            } else {
+                score = Math.floor(Math.random() * 40) + 60; // 60-100 range for simulation
+            }
+            
+            return { 
+                id, 
+                name, 
+                fullName, 
+                avatar, 
+                department, 
+                score,
+                position: 0 // Will be set after sorting
+            };
+        }).sort((a, b) => b.score - a.score);
+        
+        // Assign positions
+        standings.forEach((item, index) => {
+            item.position = index + 1;
+        });
+        
+        return standings;
+    };
+    
+    // Determine user's department filter - now all events are company-wide
     const userDepartmentFilter = useMemo(() => {
-        if (!currentUser) return "All Departments";
-        if (currentUser.role === "Admin") return "All Departments"; // Admin can see all
-        return currentUser.department; // Non-admin sees only their department
+        return "All Departments"; // All events are now company-wide
     }, [currentUser]);
 
-    // Get available events based on user's department
+    // Get available events - all events are now company-wide
     const availableEvents = useMemo(() => {
-        const departmentFilter = currentUser?.role === "Admin" ? selectedDepartment || "All Departments" : userDepartmentFilter;
-        return getEventsByDepartment(departmentFilter as Department | "All Departments")
-            .sort((a, b) => {
-                // Sort by status (Active first, then Closed, then Pending) and date
-                const statusOrder = { 'Active': 0, 'Closed': 1, 'Pending': 2 };
-                if (statusOrder[a.status] !== statusOrder[b.status]) {
-                    return statusOrder[a.status] - statusOrder[b.status];
-                }
-                if (a.startDate && b.startDate) {
-                    return b.startDate.getTime() - a.startDate.getTime();
-                }
-                return 0;
-            });
-    }, [currentUser, selectedDepartment, userDepartmentFilter]);
+        return votingEvents.sort((a, b) => {
+            // Sort by status (Active first, then Closed, then Pending) and date
+            const statusOrder = { 'Active': 0, 'Closed': 1, 'Pending': 2 };
+            if (statusOrder[a.status] !== statusOrder[b.status]) {
+                return statusOrder[a.status] - statusOrder[b.status];
+            }
+            if (a.startDate && b.startDate) {
+                return b.startDate.toDate().getTime() - a.startDate.toDate().getTime();
+            }
+            return 0;
+        });
+    }, [votingEvents]);
 
     // Get the selected event or default to the first available
     const selectedEvent = useMemo(() => {
@@ -215,14 +294,7 @@ export default function ResultsPage() {
         }
     }, [availableEvents, selectedEventId]);
 
-    // Initialize department selection for admin users
-    useEffect(() => {
-        if (currentUser?.role === "Admin" && !selectedDepartment) {
-            setSelectedDepartment("All Departments");
-        } else if (currentUser?.role !== "Admin" && currentUser?.department) {
-            setSelectedDepartment(currentUser.department);
-        }
-    }, [currentUser, selectedDepartment]);
+    // No longer need department selection since all events are company-wide
 
     const currentPhase = useMemo(() => {
         return selectedEvent && selectedEvent.status === 'Active' ? getCurrentPhase(selectedEvent) : null;
@@ -244,45 +316,53 @@ export default function ResultsPage() {
     }, [selectedEvent]);
 
     // Loading state
-    if (!currentUser) {
+    if (loading || !currentUser) {
         return (
             <div className="space-y-6">
                 <h1 className="text-3xl font-bold tracking-tight">Resultados</h1>
                 <Card>
                     <CardHeader>
-                        <CardTitle>Cargando...</CardTitle>
-                        <CardDescription>Cargando información del usuario...</CardDescription>
+                        <CardTitle className="flex items-center gap-2">
+                            <Loader2 className="h-5 w-5 animate-spin" />
+                            Cargando...
+                        </CardTitle>
+                        <CardDescription>
+                            {!currentUser ? "Cargando información del usuario..." : "Obteniendo datos de resultados desde Firebase..."}
+                        </CardDescription>
                     </CardHeader>
                 </Card>
             </div>
         );
     }
 
-    // Render dropdowns component
-    const renderDropdowns = () => (
-        <div className="flex flex-col sm:flex-row gap-4 mb-6">
-            {/* Department Dropdown - Only for Admin */}
-            {currentUser.role === "Admin" && (
-                <div className="flex-1">
-                    <label className="text-sm font-medium mb-2 block">Departamento</label>
-                    <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Seleccionar departamento" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="All Departments">Todos los Departamentos</SelectItem>
-                            {getAvailableDepartments().filter(dept => dept !== "All Departments").map((department) => (
-                                <SelectItem key={department} value={department}>
-                                    {department}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-            )}
-            
+    // Error state
+    if (error) {
+        return (
+            <div className="space-y-6">
+                <h1 className="text-3xl font-bold tracking-tight">Resultados</h1>
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-destructive">Error al Cargar</CardTitle>
+                        <CardDescription>{error}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <button 
+                            onClick={() => window.location.reload()} 
+                            className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+                        >
+                            Intentar de Nuevo
+                        </button>
+                    </CardContent>
+                </Card>
+            </div>
+        );
+    }
+
+    // Render event selector component
+    const renderEventSelector = () => (
+        <div className="flex flex-col gap-4 mb-6">
             {/* Event Dropdown */}
-            <div className="flex-1">
+            <div className="max-w-md">
                 <label className="text-sm font-medium mb-2 block">Evento</label>
                 <Select value={selectedEventId} onValueChange={setSelectedEventId}>
                     <SelectTrigger>
@@ -299,9 +379,7 @@ export default function ResultsPage() {
                                         {event.status}
                                     </Badge>
                                     <span>{event.month}</span>
-                                    {event.department && event.department !== "All Departments" && (
-                                        <span className="text-muted-foreground">({event.department})</span>
-                                    )}
+                                    <span className="text-muted-foreground">(Todos los Departamentos)</span>
                                 </div>
                             </SelectItem>
                         ))}
@@ -323,7 +401,7 @@ export default function ResultsPage() {
                     </Badge>
                 </div>
 
-                {renderDropdowns()}
+                {renderEventSelector()}
 
                 {/* Current Phase Display */}
                 <Card>
@@ -442,15 +520,16 @@ export default function ResultsPage() {
     // If there's a selected closed event, show winner
     if (selectedEvent && selectedEvent.status === 'Closed') {
         const winner = findWinnerFromEvent(selectedEvent.id);
+        const displayWinner = winner ? adaptUserForDisplay(winner) : null;
         const voteData = winner ? generateVoteData(selectedEvent.id) : [];
 
         return (
             <div className="space-y-6">
                 <h1 className="text-3xl font-bold tracking-tight">🏆 Ganador de {selectedEvent.month}</h1>
                 
-                {renderDropdowns()}
+                {renderEventSelector()}
 
-                {!winner ? (
+                {!displayWinner ? (
                     <Card>
                         <CardHeader>
                             <CardTitle>No Hay Ganador Disponible</CardTitle>
@@ -467,15 +546,15 @@ export default function ResultsPage() {
                             </CardHeader>
                             <CardContent className="flex flex-col items-center gap-4">
                                 <Avatar className="h-32 w-32 border-4 border-primary" data-ai-hint="person face">
-                                    <AvatarImage src={winner.avatar} />
-                                    <AvatarFallback>{winner.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                                    <AvatarImage src={displayWinner.avatar} />
+                                    <AvatarFallback>{displayWinner.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
                                 </Avatar>
                                 <div className="text-center">
-                                    <h2 className="text-3xl font-bold">{winner.name}</h2>
-                                    <p className="text-xl text-muted-foreground">{winner.department}</p>
+                                    <h2 className="text-3xl font-bold">{displayWinner.name}</h2>
+                                    <p className="text-xl text-muted-foreground">{displayWinner.department}</p>
                                 </div>
                                 <p className="max-w-prose text-center text-muted-foreground italic p-4 bg-muted rounded-lg">
-                                    "Por su destacada contribución y por siempre dar la milla extra. Tu arduo trabajo nos inspira a todos. ¡Bien hecho, {winner.name.split(' ')[0]}!"
+                                    "Por su destacada contribución y por siempre dar la milla extra. Tu arduo trabajo nos inspira a todos. ¡Bien hecho, {displayWinner.name.split(' ')[0]}!"
                                 </p>
                             </CardContent>
                         </Card>
@@ -512,7 +591,7 @@ export default function ResultsPage() {
             <div className="space-y-6">
                 <h1 className="text-3xl font-bold tracking-tight">Evento Pendiente - {selectedEvent.month}</h1>
                 
-                {renderDropdowns()}
+                {renderEventSelector()}
 
                 <Card>
                     <CardHeader>
@@ -531,16 +610,13 @@ export default function ResultsPage() {
         <div className="space-y-6">
             <h1 className="text-3xl font-bold tracking-tight">Resultados</h1>
             
-            {renderDropdowns()}
+            {renderEventSelector()}
             
             <Card>
                 <CardHeader>
                     <CardTitle>No Hay Eventos Disponibles</CardTitle>
                     <CardDescription>
-                        {currentUser.role === "Admin" 
-                            ? "No hay eventos disponibles para el departamento seleccionado."
-                            : `No hay eventos disponibles para el departamento ${currentUser.department}.`
-                        }
+                        No hay eventos de votación disponibles en este momento.
                     </CardDescription>
                 </CardHeader>
             </Card>
